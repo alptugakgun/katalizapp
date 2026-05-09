@@ -1,6 +1,10 @@
 {
-  "appId": "com.katalizapp.mobil",
+  "appId": "com.senin.uygulaman",
   "appName": "KatalizApp",
   "webDir": "public",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://egitim-kocu-projesi2.onrender.com",
+    "cleartext": true
+  }
 }
