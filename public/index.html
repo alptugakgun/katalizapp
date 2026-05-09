@@ -22,6 +22,34 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap');
         
+        /* 🛡️ EVRENSEL ZIRH VE MOBİL OPTİMİZASYONU */
+        *, *::before, *::after {
+            box-sizing: border-box; /* En kritik kod: Kutuların boyutunu içe doğru hesaplar, ekran taşmalarını %99 önler */
+            -webkit-tap-highlight-color: transparent; /* Mobilde butona tıklayınca çıkan o çirkin mavi parlamayı yok eder */
+        }
+        
+        html {
+            -webkit-text-size-adjust: 100%; /* Telefon yan çevrilince veya farklı ekranda yazıların devasa büyümesini engeller */
+            scroll-behavior: smooth; /* Sayfa içi kaydırmaları yağ gibi yumuşatır */
+        }
+        
+        img, video, canvas {
+            max-width: 100%; /* Resimlerin ve grafiklerin ekrandan taşmasını kesin olarak engeller */
+            height: auto;
+        }
+
+        /* Mobilde formlara (input) tıklanınca ekranın anlamsızca zoom yapmasını engeller (Özellikle iOS cihazlarda çok olur) */
+        input, select, textarea, button {
+            font-size: 16px !important; 
+            font-family: inherit;
+        }
+        
+        /* Çentikli ekranlar (iPhone vb.) ve alt ev çizgisi için güvenli alan boşlukları */
+        .app-wrapper {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
         /* 🌙 TEMA DEĞİŞKENLERİ */
         :root {
             --bg-body: #f8fafc;
