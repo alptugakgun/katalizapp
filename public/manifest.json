@@ -1,0 +1,16 @@
+{
+  "name": "KatalizApp MIS",
+  "short_name": "KatalizApp",
+  "description": "Yeni Nesil Eğitim Yönetim Sistemi",
+  "start_url": "/login.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/616/616430.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

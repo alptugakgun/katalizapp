@@ -1,0 +1,6 @@
+{
+  "appId": "com.katalizapp.mobil",
+  "appName": "KatalizApp",
+  "webDir": "public",
+  "bundledWebRuntime": false
+}

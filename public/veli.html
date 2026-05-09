@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KatalizApp - Veli Portalı</title>
+    
+    <script>
+        if (!localStorage.getItem('veliKimligi')) {
+            window.location.href = 'veli-login.html';
+        }
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap');
+        
+        :root {
+            --dark-bg: #0f172a;
+            --darker-bg: #020617;
+            --glass-bg: rgba(30, 41, 59, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --pink-neon: #ec4899;
+            --pink-glow: rgba(236, 72, 153, 0.4);
+            --green-neon: #10b981;
+            --green-glow: rgba(16, 185, 129, 0.4);
+            --amber-neon: #f59e0b;
+            --red-neon: #ef4444;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body { 
+            font-family: 'Nunito', sans-serif; 
+            background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%); 
+            padding: 30px; 
+            color: var(--text-light); 
+            margin: 0; 
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 🎨 Organik Neon Arka Plan Şekilleri */
+        .bg-shape-1 { position: fixed; top: -10%; left: -5%; width: 400px; height: 400px; background: var(--pink-neon); border-radius: 50%; opacity: 0.15; filter: blur(90px); z-index: -1; animation: floatShape 10s infinite alternate;}
+        .bg-shape-2 { position: fixed; bottom: -10%; right: -5%; width: 500px; height: 500px; background: #8b5cf6; border-radius: 50%; opacity: 0.12; filter: blur(100px); z-index: -1; animation: floatShape 12s infinite alternate-reverse;}
+        @keyframes floatShape { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(30px, 30px) scale(1.1); } }
+
+        /* 👑 Üst Header (Cam Efekti) */
+        .header { 
+            margin-bottom: 35px; 
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 20px 35px; 
+            border-radius: 30px;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            border: 1px solid var(--glass-border);
+            animation: fadeInDown 0.8s ease-out;
+        }
+        
+        .header h1 { 
+            margin: 0; 
+            color: var(--text-light); 
+            font-size: 28px; 
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        /* 🚪 Çıkış Butonu */
+        .btn-red {
+            background: linear-gradient(135deg, #ef4444, #be123c); 
+            color: white; 
+            border: 1px solid #f87171; 
+            padding: 12px 25px; 
+            border-radius: 20px; 
+            cursor: pointer; 
+            font-weight: 900; 
+            font-family: inherit;
+            font-size: 15px;
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-red:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 12px 25px rgba(239, 68, 68, 0.5); }
+        
+        /* 🎨 Cam Efektli Kutu Tasarımları */
+        .box { 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 35px; 
+            border-radius: 35px; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4); 
+            margin-bottom: 30px; 
+            border: 1px solid var(--glass-border);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+        
+        .box::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, var(--pink-neon), #8b5cf6);
+            opacity: 0; transition: 0.4s;
+        }
+
+        .box:hover {
+            transform: translateY(-5px); 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 30px rgba(236, 72, 153, 0.1); 
+            border-color: rgba(255,255,255,0.2);
+        }
+        .box:hover::before { opacity: 1; }
+
+        .box-top-border { border-top: 4px solid var(--pink-neon); }
+        .box-top-border::before { display: none; }
+        
+        /* 📡 Canlı Durum Radarı */
+        .live-status { 
+            font-size: 28px; 
+            font-weight: 900; 
+            color: var(--green-neon); 
+            display: flex; 
+            align-items: center; 
+            gap: 15px;
+            margin-top: 20px;
+            text-shadow: 0 0 15px var(--green-glow);
+            transition: all 0.3s;
+        }
+        
+        .pulse-dot { 
+            width: 20px; 
+            height: 20px; 
+            border-radius: 50%; 
+            background: var(--green-neon); 
+            animation: pulse 1.5s infinite; 
+            box-shadow: 0 0 15px var(--green-neon);
+        }
+        
+        @keyframes pulse { 
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 
+            70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } 
+        }
+
+        #canliMesaj {
+            color: #cbd5e1; 
+            font-weight: 800; 
+            font-size: 16px; 
+            margin-top: 25px; 
+            background: rgba(0,0,0,0.3); 
+            padding: 18px 25px; 
+            border-radius: 20px; 
+            display: inline-block; 
+            border: 1px solid rgba(255,255,255,0.05);
+            letter-spacing: 0.5px;
+        }
+        
+        #sureGosterge {
+            font-size: 65px; 
+            font-weight: 900; 
+            color: var(--text-light); 
+            margin-top: 20px; 
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(255,255,255,0.3);
+            background: linear-gradient(to bottom, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* 📊 İstatistik Grid */
+        .chart-container { position: relative; height: 280px; width: 100%; margin-top: 15px;}
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        
+        .stat-card { 
+            background: rgba(0,0,0,0.3); 
+            padding: 25px; 
+            border-radius: 25px; 
+            text-align: center; 
+            font-weight: 900;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: 0.3s;
+        }
+        .stat-card:hover { background: rgba(0,0,0,0.4); transform: scale(1.02); }
+        
+        /* 📅 Randevu Kutusu (Altın Neon) */
+        .ajanda-kutu { 
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(180, 83, 9, 0.2)); 
+            color: #fcd34d; 
+            padding: 30px; 
+            border-radius: 30px; 
+            font-weight: 900; 
+            border: 1px solid rgba(245, 158, 11, 0.3); 
+            margin-bottom: 30px; 
+            font-size: 16px;
+            box-shadow: 0 15px 35px rgba(245, 158, 11, 0.1);
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 0.5s ease-out backwards;
+            animation-delay: 0.1s;
+        }
+        
+        .ajanda-baslik { font-size:14px; text-transform:uppercase; letter-spacing:2px; color:#fbbf24; opacity: 0.8; }
+        .ajanda-deger { font-size: 28px; color: #fff; display:inline-block; margin-top:10px; text-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
+
+        /* Harita & Genel Yazılar */
+        h2, h3 { letter-spacing: -0.5px; margin-top: 0; }
+        
+        /* Animasyon Tanımları */
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            body { padding: 15px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .header { flex-direction: column; gap: 20px; text-align: center; padding: 25px 15px;}
+            .ajanda-kutu > div { flex-direction: column; gap: 20px; text-align: center !important; }
+            .ajanda-kutu > div > div { width: 100%; text-align: center; }
+            #sureGosterge { font-size: 50px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-shape-1"></div>
+    <div class="bg-shape-2"></div>
+
+    <div class="header">
+        <h1 id="veliKarsilama">👨‍👩‍👧‍👦 KatalizApp Veli Portalı</h1>
+        <button onclick="localStorage.clear(); window.location.href='veli-login.html'" class="btn-red">🚪 Çıkış Yap</button>
+    </div>
+
+    <div class="ajanda-kutu" id="ajandaKutu">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+                <span class="ajanda-baslik">📅 Koç ile Yaklaşan Görüşme:</span><br>
+                <span id="siradakiDersTxt" class="ajanda-deger">Planlanmadı</span>
+            </div>
+            <div style="text-align:right;">
+                <span class="ajanda-baslik">Görüşme Konusu:</span><br>
+                <span id="gorusmeKonusuTxt" class="ajanda-deger" style="font-size: 22px;">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="box box-top-border" style="animation-delay: 0.2s;">
+        <h2 style="color:var(--text-light); font-size:24px; font-weight:900;">Canlı Durum Radarı: <span id="ogrIsim" style="color:var(--pink-neon); text-shadow: 0 0 15px var(--pink-glow);">Öğrenci</span></h2>
+        
+        <div class="live-status" id="canliDurumKutusu">
+            <div class="pulse-dot"></div> 
+            <span id="canliAktivite">Derse girmesi bekleniyor...</span>
+        </div>
+        
+        <p id="canliMesaj"></p>
+        <div id="sureGosterge">00:00:00</div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="box" style="margin:0; animation-delay: 0.3s;">
+            <h3 style="color:var(--text-light); font-size:22px;">🌟 Kazanılan XP ve Lig</h3>
+            <div class="stat-card" style="background:linear-gradient(135deg, rgba(245,158,11,0.1), rgba(217,119,6,0.2)); color:#fbbf24; font-size:38px; border-color:rgba(245,158,11,0.3); text-shadow: 0 0 20px rgba(245,158,11,0.4);" id="veliXp">0 XP</div>
+            <div class="stat-card" style="margin-top:20px; background:linear-gradient(135deg, rgba(236,72,153,0.1), rgba(190,24,93,0.2)); color:#f472b6; font-size:22px; border-color:rgba(236,72,153,0.3); text-shadow: 0 0 15px rgba(236,72,153,0.4);" id="veliLig">Hesaplanıyor...</div>
+        </div>
+        <div class="box" style="margin:0; animation-delay: 0.4s;">
+            <h3 style="color:var(--text-light); font-size:22px;">📈 Genel Net Gelişimi</h3>
+            <div class="chart-container"><canvas id="netGrafigi"></canvas></div>
+        </div>
+    </div>
+    
+    <div class="box" style="margin-top: 30px; border-top: 4px solid var(--red-neon); animation-delay: 0.5s;">
+        <h3 style="color:var(--red-neon); font-size:24px; text-shadow: 0 0 15px rgba(239,68,68,0.4);">🗺️ Koç Onaylı Konu Analizi (Isı Haritası)</h3>
+        <p style="font-size:16px; color:var(--text-muted); font-weight:600; margin-bottom:25px;">Koçunuz tarafından tespit edilen, öğrencinin güçlü ve zayıf olduğu konuları içerir.</p>
+        
+        <div id="isiMevcutHarita" style="text-align:left; max-height:400px; overflow-y:auto; padding:25px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.05); border-radius:25px; font-weight:800; font-size:16px; line-height:2.2;">
+            <span style="color:#64748b;">Henüz analiz girilmedi.</span>
+        </div>
+    </div>
+
+    <script>
+        const ogrAd = localStorage.getItem('veliKimligi'); 
+        const kocKodu = localStorage.getItem('kocKodu');
+        
+        document.getElementById('ogrIsim').innerText = ogrAd;
+        
+        const socket = io(); 
+        socket.emit('join_room', kocKodu);
+        
+        let lineGrafikObjesi = null;
+
+        // Özel Chart.js Global Ayarları (Dark Mode İçin)
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = "'Nunito', sans-serif";
+
+        // Ana Veri Güncelleyici (Socket'ten gelen sinyal)
+        socket.on('gorev_guncellendi', (tumVeriler) => {
+            let benimVerim = tumVeriler.find(v => v.ogrenciAd === ogrAd);
+            
+            if(benimVerim) {
+                // 1. 📅 Ajanda ve Görüşme Konusu Çek
+                if(benimVerim.sonrakiDers && benimVerim.sonrakiDers.trim() !== '') {
+                    let d = new Date(benimVerim.sonrakiDers);
+                    document.getElementById('siradakiDersTxt').innerText = d.toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+                    document.getElementById('gorusmeKonusuTxt').innerText = benimVerim.gorusmeKonusu || "Birebir Görüşme";
+                } else { 
+                    document.getElementById('siradakiDersTxt').innerText = "Henüz Planlanmadı"; 
+                    document.getElementById('gorusmeKonusuTxt').innerText = "-";
+                }
+
+                // 2. Isı Haritası Çek (Gece moduna uyarlandı)
+                let kutu = document.getElementById('isiMevcutHarita'); 
+                kutu.innerHTML = '';
+                
+                if(!benimVerim.isiHaritasi || Object.keys(benimVerim.isiHaritasi).length === 0) { 
+                    kutu.innerHTML = '<span style="color:#64748b;">Henüz analiz girilmedi.</span>'; 
+                } else { 
+                    for(let konu in benimVerim.isiHaritasi) { 
+                        let borderRenk = benimVerim.isiHaritasi[konu].includes('Zayıf') ? '#ef4444' : benimVerim.isiHaritasi[konu].includes('Orta') ? '#f59e0b' : '#10b981';
+                        let glowRenk = benimVerim.isiHaritasi[konu].includes('Zayıf') ? 'rgba(239,68,68,0.3)' : benimVerim.isiHaritasi[konu].includes('Orta') ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)';
+                        
+                        kutu.innerHTML += `
+                            <div style="border-left: 6px solid ${borderRenk}; padding: 18px 25px; margin-bottom: 15px; background: rgba(255,255,255,0.03); border-radius: 0 20px 20px 0; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                                <span style="display:inline-block; min-width:85px; color:${borderRenk}; font-weight:900; text-shadow: 0 0 10px ${glowRenk};">${benimVerim.isiHaritasi[konu]}</span> 
+                                <span style="color:#f8fafc; font-weight:800; letter-spacing:0.5px;">${konu}</span>
+                            </div>`; 
+                    } 
+                }
+
+                // 3. XP ve Lig Çek
+                document.getElementById('veliXp').innerText = `${benimVerim.xp || 0} XP`;
+                
+                let sirali = tumVeriler.sort((a,b) => (b.xp||0) - (a.xp||0)); 
+                let sira = sirali.findIndex(v => v.ogrenciAd === ogrAd);
+                
+                if(sira !== -1 && benimVerim.xp > 0) {
+                    if(sira < 3) document.getElementById('veliLig').innerText = `🏆 Süper Lig (${sira+1}. Sırada)`;
+                    else if(sira < 8) document.getElementById('veliLig').innerText = `🥇 1. Lig (${sira+1}. Sırada)`;
+                    else document.getElementById('veliLig').innerText = `🪵 Amatör Lig`;
+                } else { 
+                    document.getElementById('veliLig').innerText = `Henüz Lige Giremedi`; 
+                }
+
+                // 4. Net Grafiği Çek (Gece Moduna Uyarlandı)
+                if(benimVerim.netler && benimVerim.netler.length > 0) {
+                    let etiketler = benimVerim.netler.map(n => n.tarih); 
+                    let veriler = benimVerim.netler.map(n => n.net);
+                    
+                    if(lineGrafikObjesi) { 
+                        lineGrafikObjesi.data.labels = etiketler; 
+                        lineGrafikObjesi.data.datasets[0].data = veriler; 
+                        lineGrafikObjesi.update(); 
+                    } else { 
+                        lineGrafikObjesi = new Chart(document.getElementById('netGrafigi').getContext('2d'), { 
+                            type: 'line', 
+                            data: { 
+                                labels: etiketler, 
+                                datasets: [{ 
+                                    label: 'Net Puanı', 
+                                    data: veriler, 
+                                    borderColor: '#ec4899', 
+                                    backgroundColor: 'rgba(236, 72, 153, 0.15)', 
+                                    fill: true, 
+                                    tension: 0.4,
+                                    pointRadius: 6,
+                                    pointBackgroundColor: '#f8fafc',
+                                    pointBorderColor: '#ec4899',
+                                    pointBorderWidth: 2
+                                }] 
+                            }, 
+                            options: { 
+                                responsive: true, 
+                                maintainAspectRatio: false, 
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    x: { grid: { color: 'rgba(255,255,255,0.05)', borderColor: 'transparent' } },
+                                    y: { grid: { color: 'rgba(255,255,255,0.05)', borderColor: 'transparent' } }
+                                }
+                            } 
+                        }); 
+                    }
+                }
+            }
+        });
+
+        socket.on('ogretmene_sure_guncelle', (veri) => { 
+            if(veri.ogrenciAd === ogrAd) {
+                document.getElementById('sureGosterge').innerText = veri.sure; 
+            }
+        });
+
+        socket.on('ogretmene_canli_bildirim', (veri) => {
+            if(veri.ogrenciAd === ogrAd) {
+                let afkMi = veri.ders === 'MASA BAŞINDAN AYRILDI';
+                let molaMi = veri.mesaj && veri.mesaj.includes('Mola'); 
+                let kutu = document.getElementById('canliDurumKutusu');
+                let pulse = kutu.querySelector('.pulse-dot');
+                
+                if(afkMi) {
+                    kutu.style.color = '#ef4444'; 
+                    kutu.style.textShadow = '0 0 15px rgba(239, 68, 68, 0.4)';
+                    pulse.style.background = '#ef4444'; 
+                    pulse.style.boxShadow = '0 0 15px #ef4444';
+                    document.getElementById('canliAktivite').innerText = '🚨 SİSTEMDEN DÜŞTÜ (AFK)'; 
+                } else if(molaMi) { 
+                    kutu.style.color = '#f59e0b'; 
+                    kutu.style.textShadow = '0 0 15px rgba(245, 158, 11, 0.4)';
+                    pulse.style.background = '#f59e0b'; 
+                    pulse.style.boxShadow = '0 0 15px #f59e0b';
+                    document.getElementById('canliAktivite').innerText = 'MOLA VERDİ VEYA DURAKLATTI'; 
+                } else { 
+                    kutu.style.color = '#10b981'; 
+                    kutu.style.textShadow = '0 0 15px rgba(16, 185, 129, 0.4)';
+                    pulse.style.background = '#10b981'; 
+                    pulse.style.boxShadow = '0 0 15px #10b981';
+                    document.getElementById('canliAktivite').innerText = 'ŞU AN CANLI ÇALIŞIYOR'; 
+                }
+                
+                document.getElementById('canliMesaj').innerHTML = afkMi ? `<span style="color:#ef4444; font-weight:900;">Öğrenci masa başında tespit edilemedi!</span>` : `<span style="color:#818cf8;">${veri.ders}</span> <span style="opacity:0.5;">➔</span> <span style="color:#f8fafc;">${veri.mesaj}</span>`;
+            }
+        });
+    </script>
+</body>
+</html>

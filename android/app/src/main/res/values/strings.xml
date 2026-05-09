@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">KatalizApp</string>
+    <string name="title_activity_main">KatalizApp</string>
+    <string name="package_name">com.katalizapp.mobil</string>
+    <string name="custom_url_scheme">com.katalizapp.mobil</string>
+</resources>

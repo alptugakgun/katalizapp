@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eğitmen Kayıt - KatalizApp</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+        
+        body { 
+            font-family: 'Nunito', sans-serif; 
+            background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            overflow: hidden; 
+        }
+        
+        .bg-shape-1 { position: absolute; top: -10%; right: -10%; width: 400px; height: 400px; background: #3b82f6; border-radius: 50%; opacity: 0.1; filter: blur(60px); z-index: -1; animation: floatShape 12s infinite alternate;}
+        .bg-shape-2 { position: absolute; bottom: -10%; left: -10%; width: 350px; height: 350px; background: #10b981; border-radius: 50%; opacity: 0.1; filter: blur(50px); z-index: -1; animation: floatShape 10s infinite alternate-reverse;}
+        @keyframes floatShape { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(-30px, -30px) scale(1.1); } }
+        
+        .login-box { 
+            background: rgba(255, 255, 255, 0.9); 
+            backdrop-filter: blur(15px); 
+            padding: 40px; 
+            border-radius: 40px; 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.05); 
+            width: 350px; 
+            text-align: center; 
+            border: 2px solid #ffffff; 
+            z-index: 1;
+        }
+        
+        .logo { font-size: 50px; margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        
+        h1 { color: #1e293b; font-weight: 900; margin-bottom: 10px; font-size: 24px; }
+        p { color: #64748b; font-weight: 800; font-size: 14px; margin-bottom: 25px; }
+        
+        input { 
+            width: 100%; 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            border-radius: 18px; 
+            border: 2px solid #f1f5f9; 
+            outline: none; 
+            font-family: inherit; 
+            font-weight: 800; 
+            box-sizing: border-box; 
+            background: #f8fafc; 
+            transition: 0.3s; 
+            color: #334155;
+        }
+        input:focus { border-color: #8b5cf6; background: #fff; }
+        
+        button { 
+            width: 100%; 
+            padding: 15px; 
+            border-radius: 18px; 
+            border: none; 
+            background: linear-gradient(135deg, #3b82f6, #4f46e5); 
+            color: white; 
+            font-weight: 900; 
+            font-size: 16px; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2); 
+            margin-top: 10px;
+        }
+        button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(59, 130, 246, 0.3); }
+        
+        .footer-links { margin-top: 25px; font-size: 13px; font-weight: 800; color: #64748b; line-height: 1.8;}
+        a { color: #8b5cf6; text-decoration: none; font-weight: 900;}
+    </style>
+</head>
+<body>
+    <div class="bg-shape-1"></div>
+    <div class="bg-shape-2"></div>
+    
+    <div class="login-box">
+        <div class="logo">👨‍🏫</div>
+        <h1>Koç Olarak Katıl</h1>
+        <p>Kendi dijital sınıfını anında oluştur.</p>
+        
+        <input type="text" id="kocAd" placeholder="Kullanıcı Adı Belirle">
+        <input type="password" id="kocSifre" placeholder="Bir Şifre Belirle" onkeypress="if(event.key === 'Enter') kocKayit()">
+        
+        <button onclick="kocKayit()">Sınıfımı Kur</button>
+        
+        <div class="footer-links">
+            Zaten hesabınız var mı? <a href="ogretmen-login.html">Giriş Yapın</a> <br>
+            <a href="anasayfa.html" style="color:#94a3b8;">← Anasayfaya Dön</a>
+        </div>
+    </div>
+
+    <script>
+        async function kocKayit() {
+            const ad = document.getElementById('kocAd').value.trim();
+            const sifre = document.getElementById('kocSifre').value.trim();
+            
+            if(!ad || !sifre) return alert("Kullanıcı adı ve şifre boş bırakılamaz!");
+            
+            try {
+                const res = await fetch('/api/koc/kayit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ kocAd: ad, sifre: sifre })
+                });
+                const data = await res.json();
+                
+                if(data.basari) {
+                    alert(data.mesaj + "\nLütfen kodu not alın!");
+                    window.location.href = 'ogretmen-login.html';
+                } else {
+                    alert(data.mesaj);
+                }
+            } catch (e) {
+                alert("Sunucuya bağlanırken bir hata oluştu!");
+            }
+        }
+    </script>
+</body>
+</html>

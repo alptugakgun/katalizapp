@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>KatalizApp - God Mode Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+        
+        body { 
+            font-family: 'Nunito', sans-serif; 
+            background: #0f172a; 
+            color: #f8fafc; 
+            margin: 0; 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden;
+        }
+        
+        .sidebar { 
+            width: 260px; 
+            background: #1e293b; 
+            padding: 30px 20px; 
+            display: flex; 
+            flex-direction: column; 
+            border-right: 1px solid #334155; 
+        }
+        
+        .logo { 
+            font-size: 24px; 
+            font-weight: 900; 
+            color: #60a5fa; 
+            margin-bottom: 40px; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+        }
+        
+        .menu-item { 
+            padding: 15px; 
+            margin-bottom: 10px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            color: #94a3b8; 
+            transition: 0.3s; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+        }
+        
+        .menu-item:hover, .menu-item.active { 
+            background: #3b82f6; 
+            color: white; 
+        }
+        
+        .content { 
+            flex: 1; 
+            padding: 40px; 
+            overflow-y: auto; 
+            display: none;
+        }
+        
+        .content.active { 
+            display: block; 
+        }
+        
+        .login-overlay { 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: #0f172a; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 1000;
+        }
+        
+        .login-box { 
+            background: #1e293b; 
+            padding: 40px; 
+            border-radius: 20px; 
+            text-align: center; 
+            border: 2px solid #3b82f6; 
+            width: 350px;
+        }
+        
+        .login-box input { 
+            width: 90%; 
+            padding: 15px; 
+            border-radius: 10px; 
+            border: none; 
+            outline: none; 
+            font-size: 16px; 
+            font-weight: bold; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            background: #334155; 
+            color: white;
+        }
+        
+        .login-box button { 
+            width: 100%; 
+            padding: 15px; 
+            background: #3b82f6; 
+            color: white; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 18px; 
+            font-weight: 900; 
+            cursor: pointer; 
+            transition: 0.3s;
+        }
+        
+        .login-box button:hover { 
+            background: #2563eb; 
+        }
+
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 20px; 
+            margin-bottom: 30px;
+        }
+        
+        .stat-card { 
+            background: #1e293b; 
+            padding: 25px; 
+            border-radius: 15px; 
+            border-left: 5px solid #10b981; 
+        }
+        
+        .stat-card h3 { 
+            margin: 0 0 10px 0; 
+            color: #94a3b8; 
+            font-size: 16px;
+        }
+        
+        .stat-card h1 { 
+            margin: 0; 
+            font-size: 40px; 
+            color: #f8fafc;
+        }
+        
+        .table-wrapper { 
+            background: #1e293b; 
+            border-radius: 15px; 
+            overflow: hidden; 
+            border: 1px solid #334155;
+            margin-bottom: 20px;
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            text-align: left; 
+        }
+        
+        th, td { 
+            padding: 15px 20px; 
+            border-bottom: 1px solid #334155; 
+        }
+        
+        th { 
+            background: #0f172a; 
+            color: #cbd5e1; 
+            font-weight: 900; 
+            font-size: 13px; 
+            text-transform: uppercase;
+        }
+        
+        td { 
+            font-weight: bold; 
+            font-size: 14px;
+        }
+        
+        .badge { 
+            padding: 5px 10px; 
+            border-radius: 8px; 
+            font-size: 12px; 
+            font-weight: 900;
+        }
+        
+        .btn-red { 
+            background: #ef4444; 
+            color: white; 
+            border: none; 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.2s;
+        }
+        
+        .btn-red:hover { 
+            transform: scale(1.05); 
+        }
+        
+        .btn-blue { 
+            background: #3b82f6; 
+            color: white; 
+            border: none; 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.2s;
+        }
+        
+        .btn-blue:hover { 
+            transform: scale(1.05); 
+        }
+
+        /* YENİ: Sarı Şifre Sıfırlama Butonu */
+        .btn-yellow { 
+            background: #f59e0b; 
+            color: white; 
+            border: none; 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.2s;
+        }
+        
+        .btn-yellow:hover { 
+            transform: scale(1.05); 
+            background: #d97706;
+        }
+
+        h2 { 
+            border-bottom: 2px solid #334155; 
+            padding-bottom: 15px; 
+            margin-top: 0;
+        }
+
+        .ay-kutusu { 
+            display: inline-block; 
+            background: #334155; 
+            color: #94a3b8;
+            padding: 5px 10px; 
+            border-radius: 6px; 
+            margin: 3px; 
+            font-size: 12px; 
+            cursor: pointer; 
+            transition: 0.2s;
+        }
+        
+        .ay-kutusu.odendi { 
+            background: #10b981; 
+            color: white; 
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-overlay" id="loginScreen">
+        <div class="login-box">
+            <h1 style="color: #60a5fa; margin-top:0;">👑 God Mode</h1>
+            <input type="password" id="adminPass" placeholder="Sistem Şifresi">
+            <button onclick="giris()">Sistemi Başlat</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="logo">⚡ KatalizApp MIS</div>
+        <div class="menu-item active" onclick="sekmeAc('ozet', this)">📊 Genel Özet</div>
+        <div class="menu-item" onclick="sekmeAc('muhasebe', this)" style="color: #10b981;">💰 Muhasebe (SaaS)</div>
+        <div class="menu-item" onclick="sekmeAc('koclar', this)">👨‍🏫 Eğitmenler</div>
+        <div class="menu-item" onclick="sekmeAc('ogrenciler', this)">🎓 Öğrenciler</div>
+        <div style="flex-grow: 1;"></div>
+        <div class="menu-item" onclick="adminCikis()" style="color: #ef4444;">🚪 Çıkış Yap</div>
+    </div>
+
+    <div class="content active" id="sec_ozet">
+        <h2>Sistem Metrikleri</h2>
+        <div class="stats-grid">
+            <div class="stat-card" style="border-color: #3b82f6;">
+                <h3>Aktif Eğitmen Sayısı</h3>
+                <h1 id="met_koc">0</h1>
+            </div>
+            <div class="stat-card" style="border-color: #f59e0b;">
+                <h3>Aktif Öğrenci Sayısı</h3>
+                <h1 id="met_ogr">0</h1>
+            </div>
+            <div class="stat-card" style="border-color: #8b5cf6;">
+                <h3>Toplam Üretilen XP</h3>
+                <h1 id="met_xp">0</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="content" id="sec_muhasebe">
+        <h2 style="color: #10b981; border-bottom-color: #10b981;">SaaS Lisans & Muhasebe Takibi</h2>
+        <p style="color: #94a3b8; margin-bottom: 20px;">Sistemi kullanan öğretmenlerin size yaptıkları platform kullanım (lisans) ödemelerini buradan takip edin.</p>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Eğitmen İsmi & Kodu</th>
+                        <th style="width: 50%;">Aylık Platform Ödemesi Takibi (10 Ay)</th>
+                        <th>Aksiyon</th>
+                    </tr>
+                </thead>
+                <tbody id="tablo_muhasebe"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="content" id="sec_koclar">
+        <h2>Kayıtlı Eğitmen Veritabanı</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Eğitmen İsmi</th>
+                        <th>Sistem Şifresi</th>
+                        <th>Davet Kodu</th>
+                        <th>Öğrenci Sy.</th>
+                        <th>Aksiyonlar</th>
+                    </tr>
+                </thead>
+                <tbody id="tablo_koc"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="content" id="sec_ogrenciler">
+        <h2>Kayıtlı Öğrenci Veritabanı</h2>
+        <div class="table-wrapper" style="max-height: 70vh; overflow-y: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Öğrenci İsmi</th>
+                        <th>Eğitmeni (Kod)</th>
+                        <th>Veli Kodu</th>
+                        <th>Deneyim Puanı</th>
+                        <th>Aksiyonlar</th>
+                    </tr>
+                </thead>
+                <tbody id="tablo_ogr"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let aktifSifre = ''; 
+        let tumKoclar = []; 
+        let tumOgrler = [];
+        
+        const AYLAR = ["Eyl", "Eki", "Kas", "Ara", "Oca", "Sub", "Mar", "Nis", "May", "Haz"];
+
+        window.onload = function() {
+            let kayitliSifre = localStorage.getItem('adminPass');
+            if(kayitliSifre === 'sincap-boss-2026') {
+                document.getElementById('adminPass').value = kayitliSifre;
+                giris();
+            }
+        };
+
+        // Sistemi Başlat (Login)
+        async function giris() { 
+            let s = document.getElementById('adminPass').value; 
+            if(!s) return; 
+            
+            try {
+                const res = await fetch('/api/admin', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ sifre: s }) 
+                }); 
+                
+                const result = await res.json(); 
+                
+                if(result.basari) { 
+                    aktifSifre = s; 
+                    localStorage.setItem('adminPass', s); 
+                    
+                    document.getElementById('loginScreen').style.display = 'none'; 
+                    tumKoclar = result.data.koclar; 
+                    tumOgrler = result.data.ogrler; 
+                    
+                    verileriRenderEt(); 
+                } else { 
+                    alert('Hatalı Şifre!'); 
+                } 
+            } catch (err) {
+                console.error("Giriş hatası:", err);
+            }
+        }
+
+        function adminCikis() {
+            localStorage.removeItem('adminPass');
+            location.reload();
+        }
+
+        // Sol Menü Geçişi
+        function sekmeAc(id, el) { 
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active')); 
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active')); 
+            
+            document.getElementById('sec_' + id).classList.add('active'); 
+            el.classList.add('active'); 
+        }
+
+        // Tıklanan ayı yeşile çevirme (UI)
+        window.ayDegistir = function(el) {
+            el.classList.toggle('odendi');
+        };
+
+        // Finans verisini veritabanına yollama
+        window.muhasebeKaydet = async function(kod) {
+            let finansData = {};
+            
+            AYLAR.forEach(ay => {
+                let el = document.getElementById(`fin_${kod}_${ay}`);
+                if (el) {
+                    finansData[ay] = el.classList.contains('odendi');
+                }
+            });
+
+            try {
+                const res = await fetch('/api/admin/finans_kaydet', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        sifre: aktifSifre, 
+                        kocKodu: kod, 
+                        finans: finansData
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.basari) {
+                    alert("Eğitmen lisans ödeme bilgisi başarıyla kaydedildi!");
+                    giris(); // Tabloları tazele
+                } else {
+                    alert("Kaydetme başarısız!");
+                }
+            } catch (err) {
+                console.error("Muhasebe kaydetme hatası:", err);
+            }
+        };
+
+        // Tabloları Oluşturma Motoru
+        function verileriRenderEt() {
+            
+            // 1. Özet Metrikleri
+            document.getElementById('met_koc').innerText = tumKoclar.length; 
+            document.getElementById('met_ogr').innerText = tumOgrler.length; 
+            
+            let totalXp = tumOgrler.reduce((sum, ogr) => sum + (ogr.xp || 0), 0); 
+            document.getElementById('met_xp').innerText = totalXp;
+            
+            // 2. Muhasebe Tablosunu Doldur
+            let mTablo = document.getElementById('tablo_muhasebe'); 
+            mTablo.innerHTML = '';
+            
+            if (tumKoclar.length === 0) {
+                mTablo.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sistemde kayıtlı eğitmen yok.</td></tr>';
+            }
+            
+            tumKoclar.forEach(k => {
+                let aylarHtml = "";
+                let kocFinans = k.finans || {}; 
+                
+                AYLAR.forEach(ay => {
+                    let sinif = kocFinans[ay] ? "ay-kutusu odendi" : "ay-kutusu";
+                    aylarHtml += `<span class="${sinif}" id="fin_${k.kocKodu}_${ay}" onclick="ayDegistir(this)">${ay}</span>`;
+                });
+                
+                mTablo.innerHTML += `
+                    <tr>
+                        <td>
+                            👨‍🏫 ${k.kocAd} <br>
+                            <span class="badge" style="background:#fef3c7; color:#d97706; margin-top:5px; display:inline-block;">${k.kocKodu}</span>
+                        </td>
+                        <td>${aylarHtml}</td>
+                        <td>
+                            <button class="btn-blue" style="background:#10b981;" onclick="muhasebeKaydet('${k.kocKodu}')">Kaydet</button>
+                        </td>
+                    </tr>`;
+            });
+
+            // 3. Eğitmenler Tablosunu Doldur
+            let kTablo = document.getElementById('tablo_koc'); 
+            kTablo.innerHTML = '';
+            
+            if (tumKoclar.length === 0) {
+                kTablo.innerHTML = '<tr><td colspan="5" style="text-align:center;">Sistemde kayıtlı eğitmen yok.</td></tr>';
+            }
+            
+            tumKoclar.forEach(k => {
+                let bagliOgrenciSayisi = tumOgrler.filter(o => o.kocKodu === k.kocKodu).length;
+                kTablo.innerHTML += `
+                    <tr>
+                        <td>👨‍🏫 ${k.kocAd}</td>
+                        <td style="color:#10b981; font-family:monospace; font-size:16px;">***** (Kriptolu)</td>
+                        <td><span class="badge" style="background:#fef3c7; color:#d97706;">${k.kocKodu}</span></td>
+                        <td>${bagliOgrenciSayisi}</td>
+                        <td>
+                            <div style="display:flex; gap:5px;">
+                                <button class="btn-yellow" onclick="sifreSifirlaKoc('${k.kocKodu}', '${k.kocAd}')" title="Şifreyi '123456' Yapar">🔑 Sıfırla</button>
+                                <button class="btn-red" onclick="kocSil('${k.kocKodu}', '${k.kocAd}')">🗑️ Sil (Banla)</button>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+
+            // 4. Öğrenciler Tablosunu Doldur
+            let oTablo = document.getElementById('tablo_ogr'); 
+            oTablo.innerHTML = '';
+            
+            if (tumOgrler.length === 0) {
+                oTablo.innerHTML = '<tr><td colspan="5" style="text-align:center;">Sistemde kayıtlı öğrenci yok.</td></tr>';
+            }
+            
+            tumOgrler.forEach(o => { 
+                oTablo.innerHTML += `
+                    <tr>
+                        <td>🎓 ${o.ogrenciAd}</td>
+                        <td><span class="badge" style="background:#e0e7ff; color:#4f46e5;">${o.kocKodu}</span></td>
+                        <td><span class="badge" style="background:#d1fae5; color:#059669;">${o.veliKodu || 'Yok'}</span></td>
+                        <td style="color:#f59e0b;">${o.xp || 0} XP</td>
+                        <td>
+                            <div style="display:flex; gap:5px;">
+                                <button class="btn-yellow" onclick="sifreSifirlaOgrenci('${o._id}', '${o.ogrenciAd}')" title="Şifreyi '123456' Yapar">🔑 Sıfırla</button>
+                                <button class="btn-red" onclick="ogrenciSil('${o._id}', '${o.ogrenciAd}')">🗑️ Kov</button>
+                            </div>
+                        </td>
+                    </tr>`; 
+            });
+        }
+
+        // =====================================
+        // VERİTABANI: ŞİFRE SIFIRLAMA İŞLEMLERİ
+        // =====================================
+
+        async function sifreSifirlaKoc(kod, isim) {
+            if (confirm(`DİKKAT: ${isim} isimli eğitmenin şifresini '123456' olarak değiştirmek istediğinize emin misiniz?`)) {
+                try {
+                    const res = await fetch('/api/admin/sifre_sifirla_koc', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ sifre: aktifSifre, kocKodu: kod })
+                    });
+                    const data = await res.json();
+                    if (data.basari) {
+                        alert("✅ İşlem başarılı! Eğitmenin yeni şifresi: 123456");
+                    } else {
+                        alert("Sıfırlama başarısız! Sistem şifrenizi kontrol edin.");
+                    }
+                } catch (err) {
+                    console.error("Sıfırlama hatası:", err);
+                }
+            }
+        }
+
+        async function sifreSifirlaOgrenci(id, isim) {
+            if (confirm(`DİKKAT: ${isim} isimli öğrencinin şifresini '123456' olarak değiştirmek istediğinize emin misiniz?`)) {
+                try {
+                    const res = await fetch('/api/admin/sifre_sifirla_ogrenci', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ sifre: aktifSifre, ogrenciId: id })
+                    });
+                    const data = await res.json();
+                    if (data.basari) {
+                        alert("✅ İşlem başarılı! Öğrencinin yeni şifresi: 123456");
+                    } else {
+                        alert("Sıfırlama başarısız! Sistem şifrenizi kontrol edin.");
+                    }
+                } catch (err) {
+                    console.error("Sıfırlama hatası:", err);
+                }
+            }
+        }
+
+        // =====================================
+        // VERİTABANI: SİLME (BANLAMA) İŞLEMLERİ
+        // =====================================
+
+        async function kocSil(kod, isim) { 
+            if (confirm(`Eğitmeni ve bağlı tüm öğrencileri tamamen SİLMEK istediğinize emin misiniz? Bu işlem geri alınamaz!`)) { 
+                try {
+                    const res = await fetch('/api/admin/sil', { 
+                        method: 'POST', 
+                        headers: {'Content-Type': 'application/json'}, 
+                        body: JSON.stringify({ sifre: aktifSifre, kod: kod }) 
+                    }); 
+                    
+                    const data = await res.json(); 
+                    
+                    if (data.basari) { 
+                        alert("Eğitmen ve sınıfı silindi!"); 
+                        giris(); 
+                    } 
+                } catch (err) {
+                    console.error("Silme hatası:", err);
+                }
+            } 
+        }
+
+        async function ogrenciSil(id, isim) { 
+            if (confirm(`Bu öğrenciyi sistemden tamamen ATMAK istediğinize emin misiniz?`)) { 
+                try {
+                    const res = await fetch('/api/admin/sil_ogrenci', { 
+                        method: 'POST', 
+                        headers: {'Content-Type': 'application/json'}, 
+                        body: JSON.stringify({ sifre: aktifSifre, ogrenciId: id }) 
+                    }); 
+                    
+                    const data = await res.json(); 
+                    
+                    if (data.basari) { 
+                        alert("Öğrenci silindi!"); 
+                        giris(); 
+                    } 
+                } catch (err) {
+                    console.error("Silme hatası:", err);
+                }
+            } 
+        }
+    </script>
+</body>
+</html>

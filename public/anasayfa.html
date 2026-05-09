@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KatalizApp - Eğitimde Yeni Nesil Koçluk ve Oyunlaştırma</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+        
+        :root {
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.6);
+            --secondary: #10b981;
+            --secondary-glow: rgba(16, 185, 129, 0.6);
+            --accent: #a855f7;
+            --accent-glow: rgba(168, 85, 247, 0.6);
+            --dark: #0f172a;
+            --dark-card: rgba(30, 41, 59, 0.7);
+            --light: #f8fafc;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --bg-gradient: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body { 
+            font-family: 'Nunito', sans-serif; 
+            background: var(--bg-gradient); 
+            margin: 0; 
+            padding: 0;
+            color: var(--text-main);
+            overflow-x: hidden;
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+
+        /* 🎨 Neon Arka Plan Şekilleri */
+        .bg-shape-1 { position: absolute; top: -10%; left: -5%; width: 500px; height: 500px; background: #3b82f6; border-radius: 50%; opacity: 0.15; filter: blur(90px); z-index: -1; animation: floatShape 10s infinite alternate;}
+        .bg-shape-2 { position: absolute; top: 30%; right: -10%; width: 600px; height: 600px; background: var(--accent); border-radius: 50%; opacity: 0.15; filter: blur(100px); z-index: -1; animation: floatShape 12s infinite alternate-reverse;}
+        .bg-shape-3 { position: absolute; bottom: 10%; left: 10%; width: 400px; height: 400px; background: var(--secondary); border-radius: 50%; opacity: 0.15; filter: blur(80px); z-index: -1; animation: floatShape 15s infinite alternate;}
+        @keyframes floatShape { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(40px, 40px) scale(1.1); } }
+
+        /* 🚀 Scroll Animasyon Sınıfları */
+        .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        /* 📱 Navbar (Cam Efekti) */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5vw;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 5px 30px rgba(0,0,0,0.5);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+            text-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
+        
+        .logo span { animation: bounce 2s infinite; display: inline-block; color: #f59e0b; text-shadow: 0 0 20px #f59e0b;}
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        .nav-links { display: flex; gap: 15px; align-items: center; }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-weight: 900;
+            font-size: 15px;
+            text-decoration: none;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-outline { background: rgba(255,255,255,0.05); color: var(--light); border: 2px solid var(--glass-border); backdrop-filter: blur(10px); }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+
+        .btn-primary { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 8px 25px var(--secondary-glow); border: 1px solid #34d399; }
+        .btn-primary:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 15px 35px var(--secondary-glow); }
+
+        .btn-koc { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; box-shadow: 0 8px 25px var(--primary-glow); border: 1px solid #60a5fa;}
+        .btn-koc:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 15px 35px var(--primary-glow); }
+
+        /* ⚡ Hero Section */
+        .hero {
+            text-align: center;
+            padding: 140px 20px 100px;
+            max-width: 950px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .badge {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 8px 22px;
+            border-radius: 20px;
+            font-weight: 900;
+            font-size: 14px;
+            display: inline-block;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            box-shadow: 0 0 20px var(--primary-glow);
+            animation: pulseGlow 2s infinite alternate;
+        }
+
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 10px rgba(59,130,246,0.2); } 100% { box-shadow: 0 0 25px rgba(59,130,246,0.6); } }
+
+        .hero h1 {
+            font-size: 65px;
+            font-weight: 900;
+            color: var(--light);
+            margin: 0 0 30px 0;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        .hero h1 span {
+            background: linear-gradient(135deg, #a855f7, #ec4899, #f43f5e);
+            -webkit-background-clip: text;
+            background-clip: text; 
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+            filter: drop-shadow(0 0 15px rgba(236, 72, 153, 0.4));
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin: 0 auto 50px auto;
+            max-width: 800px;
+            line-height: 1.8;
+        }
+
+        .hero-actions { display: flex; gap: 25px; justify-content: center; flex-wrap: wrap; }
+        .hero-actions .btn { padding: 20px 45px; font-size: 18px; border-radius: 30px; }
+
+        /* 🧩 Tanıtım / Detay Bölümleri */
+        .section-title { text-align: center; margin: 100px 0 60px; }
+        .section-title h2 { font-size: 42px; font-weight: 900; color: var(--light); margin-bottom: 20px; letter-spacing: -1px;}
+        .section-title p { color: var(--text-muted); font-size: 20px; max-width: 650px; margin: 0 auto; font-weight: 600;}
+
+        /* ✨ Özellikler Grid (Neon Kartlar) */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 40px;
+            padding: 0 5vw 100px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--dark-card);
+            backdrop-filter: blur(15px);
+            padding: 45px 35px;
+            border-radius: 35px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            opacity: 0; transition: 0.4s;
+        }
+
+        .feature-card:hover { 
+            transform: translateY(-15px); 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5), 0 0 30px rgba(168, 85, 247, 0.15); 
+            border-color: rgba(168, 85, 247, 0.3);
+            background: rgba(30, 41, 59, 0.9);
+        }
+        .feature-card:hover::before { opacity: 1; }
+        
+        .f-icon { font-size: 50px; margin-bottom: 25px; background: rgba(255,255,255,0.05); width: 90px; height: 90px; display: flex; align-items: center; justify-content: center; border-radius: 25px; border: 1px solid var(--glass-border); text-shadow: 0 0 15px rgba(255,255,255,0.5); transition: 0.3s;}
+        .feature-card:hover .f-icon { transform: scale(1.1) rotate(5deg); }
+        .feature-card h3 { font-size: 24px; font-weight: 900; color: var(--light); margin-bottom: 15px; }
+        .feature-card p { color: var(--text-muted); font-size: 16px; font-weight: 600; margin: 0; line-height: 1.7; }
+
+        /* 🔬 Nasıl Çalışır (Detaylı Bilgi) */
+        .info-section { 
+            background: rgba(15, 23, 42, 0.8); 
+            padding: 100px 5vw; 
+            margin: 50px 0; 
+            border-top: 1px solid var(--glass-border); 
+            border-bottom: 1px solid var(--glass-border); 
+            position: relative;
+        }
+        .info-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+        
+        .info-text h3 { font-size: 38px; font-weight: 900; margin-bottom: 25px; color: var(--light); letter-spacing: -1px;}
+        .info-text p { font-size: 18px; color: var(--text-muted); margin-bottom: 30px; font-weight: 600; line-height: 1.8;}
+        .info-list { list-style: none; padding: 0; margin-top: 40px; }
+        .info-list li { display: flex; gap: 20px; margin-bottom: 30px; align-items: flex-start; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s;}
+        .info-list li:hover { background: rgba(255,255,255,0.05); border-color: rgba(59, 130, 246, 0.3); transform: translateX(10px);}
+        
+        .info-list li span { 
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
+            color: white; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; 
+            border-radius: 12px; font-weight: 900; flex-shrink: 0; font-size: 18px;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+        .info-list li div { font-size: 18px; color: var(--light); font-weight: 800; }
+        .info-list li div small { display: block; color: var(--text-muted); font-weight: 600; font-size: 15px; margin-top: 8px; line-height: 1.6;}
+
+        .info-image { 
+            background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(168,85,247,0.1)); 
+            border-radius: 40px; height: 550px; display: flex; align-items: center; justify-content: center; font-size: 120px; 
+            border: 2px dashed rgba(168, 85, 247, 0.3); box-shadow: inset 0 0 50px rgba(168, 85, 247, 0.05);
+            animation: floatShape 8s infinite alternate ease-in-out;
+        }
+
+        /* 📊 İstatistikler / Alt Banner */
+        .stats-banner { background: #020617; padding: 100px 20px; text-align: center; margin-top: 100px; border-top: 1px solid var(--glass-border); border-bottom: 1px solid var(--glass-border);}
+        .stats-grid { display: flex; justify-content: center; gap: 100px; flex-wrap: wrap; max-width: 1100px; margin: 0 auto; }
+        .stat-item h4 { font-size: 65px; font-weight: 900; margin: 0; background: linear-gradient(135deg, #10b981, #34d399); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.4));}
+        .stat-item p { font-size: 18px; font-weight: 800; color: var(--text-muted); margin: 10px 0 0 0; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* ❓ SSS (Sıkça Sorulan Sorular) */
+        .faq-section { max-width: 900px; margin: 100px auto; padding: 0 20px; }
+        .faq-item { background: var(--dark-card); backdrop-filter: blur(10px); border-radius: 25px; padding: 30px; margin-bottom: 25px; border: 1px solid var(--glass-border); box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: 0.3s;}
+        .faq-item:hover { border-color: rgba(255,255,255,0.2); transform: scale(1.02); }
+        .faq-item h4 { margin: 0 0 15px 0; font-size: 20px; font-weight: 900; color: var(--light); display: flex; align-items: center; gap: 12px; }
+        .faq-item p { margin: 0; color: var(--text-muted); font-size: 16px; font-weight: 600; line-height: 1.7;}
+
+        /* 🏁 Footer */
+        footer { padding: 60px 20px 40px; text-align: center; background: #020617; margin-top: 80px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .footer-logo { font-size: 24px; font-weight: 900; color: var(--light); margin-bottom: 20px; letter-spacing: -0.5px;}
+        footer p { color: var(--text-muted); font-size: 15px; font-weight: 600; margin-bottom: 30px;}
+        .footer-links { margin-top: 20px; display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;}
+        .footer-links a { color: var(--primary); text-decoration: none; font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s;}
+        .footer-links a:hover { color: var(--accent); text-shadow: 0 0 10px var(--accent-glow);}
+
+        /* 📱 Responsive */
+        @media (max-width: 900px) {
+            header { flex-direction: column; gap: 20px; padding: 20px; }
+            .nav-links { flex-wrap: wrap; justify-content: center; }
+            .hero h1 { font-size: 45px; }
+            .info-container { grid-template-columns: 1fr; gap: 40px;}
+            .info-image { height: 350px; }
+            .stats-grid { gap: 50px; }
+            .stat-item h4 { font-size: 50px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-shape-1"></div>
+    <div class="bg-shape-2"></div>
+    <div class="bg-shape-3"></div>
+
+    <header>
+        <a href="anasayfa.html" class="logo"><span>⚡</span> KatalizApp</a>
+        <div class="nav-links">
+            <a href="veli-login.html" class="btn btn-outline">👨‍👩‍👧‍👦 Veli Girişi</a>
+            <a href="login.html" class="btn btn-primary">🎓 Öğrenci Girişi</a>
+            <a href="ogretmen-login.html" class="btn btn-koc">👨‍🏫 Eğitmen Paneli</a>
+        </div>
+    </header>
+
+    <section class="hero reveal">
+        <div class="badge">V2.0 Aktif</div>
+        <h1>Eğitimde <br><span>Oyunlaştırma</span> ve Yapay Zeka Devrimi</h1>
+        <p>Klasik takip tablolarını ve sıkıcı çalışma rutinlerini unutun. Öğrencilerinizi XP (Deneyim Puanı) kazanarak yarıştıran, eksiklerini yapay zeka ile analiz eden ve velileri anlık olarak bilgilendiren yeni nesil koçluk platformuyla tanışın.</p>
+        
+        <div class="hero-actions">
+            <a href="kayit.html" class="btn btn-primary">🎓 Öğrenci Olarak Başla</a>
+            <a href="ogretmen-kayit.html" class="btn btn-koc">👨‍🏫 Eğitim Koçu Olarak Katıl</a>
+        </div>
+    </section>
+
+    <div class="section-title reveal">
+        <h2>Sistemin Temel Taşları</h2>
+        <p>Öğrencilerin motivasyonunu zirveye taşıyan, koçların iş yükünü hafifleten araçlar.</p>
+    </div>
+
+    <div class="features-grid">
+        <div class="feature-card reveal">
+            <div class="f-icon">🎮</div>
+            <h3>Oyunlaştırılmış Sistem</h3>
+            <p>Öğrenciler masa başında durdukça ve görevleri bitirdikçe XP kazanır. Sınıf içi liderlik tabloları ve düellolarla çalışma motivasyonu organik olarak artar.</p>
+        </div>
+        <div class="feature-card reveal">
+            <div class="f-icon">🤖</div>
+            <h3>AI Strateji Asistanı</h3>
+            <p>Girilen netler anında konu ısı haritasına dönüşür. Yapay zeka koçu, öğrencinin zayıf noktalarını tespit eder ve eğitmene "Kurtarma Operasyonları" önerir.</p>
+        </div>
+        <div class="feature-card reveal">
+            <div class="f-icon">📡</div>
+            <h3>Canlı Odak Radarı</h3>
+            <p>Öğrenci kronometreyi açıp masadan kalkamaz. "Gözüm Üzerinde" AFK denetmeni, rastgele anlarda yoklama yapar. Masada yoksan kronometren durur.</p>
+        </div>
+        <div class="feature-card reveal">
+            <div class="f-icon">📱</div>
+            <h3>Şeffaf Veli Portalı</h3>
+            <p>Veliler kendilerine özel şifrelerle sisteme girer. Çocuklarının canlı olarak derste olup olmadığını, haftalık net gelişimlerini ve koç randevularını takip ederler.</p>
+        </div>
+        <div class="feature-card reveal">
+            <div class="f-icon">🛒</div>
+            <h3>XP Market ve Ödüller</h3>
+            <p>Kazanılan XP'ler sadece puandan ibaret değildir. Öğrenciler biriktirdikleri puanlarla koçun belirlediği mağazadan "Ekstra Mola" veya "Özel Soru Çözümü" satın alabilir.</p>
+        </div>
+        <div class="feature-card reveal">
+            <div class="f-icon">🧠</div>
+            <h3>Psikolojik Rehberlik</h3>
+            <p>Sınav kaygısı ve öğrenme stilleri testleriyle öğrencilerin sadece akademik değil, psikolojik durumları da analiz edilip koçun raporuna düşer.</p>
+        </div>
+    </div>
+
+    <section class="info-section reveal">
+        <div class="info-container">
+            <div class="info-image">🚀</div>
+            <div class="info-text">
+                <h3>Süreç Nasıl İşliyor?</h3>
+                <p>Eğitmenler dakikalar içinde dijital sınıflarını oluşturur ve öğrencilerini davet eder. Herkes kendi rolüne uygun paneli kullanır.</p>
+                
+                <ul class="info-list">
+                    <li>
+                        <span>1</span>
+                        <div>
+                            Eğitmen Sınıfı Kurar
+                            <small>Sisteme kayıt olan eğitmen, benzersiz bir davet kodu elde eder. Bu kodu öğrencileriyle paylaşarak onları sınıfına dahil eder.</small>
+                        </div>
+                    </li>
+                    <li>
+                        <span>2</span>
+                        <div>
+                            Öğrenci Çalışmaya Başlar
+                            <small>Öğrenci panele girer, Pomodoro veya normal sayacını açar. Çalıştıkça XP kazanır, deneme netlerini girer ve hatalı sorularının fotoğrafını sisteme yükler.</small>
+                        </div>
+                    </li>
+                    <li>
+                        <span>3</span>
+                        <div>
+                            Koç ve Veli Takip Eder
+                            <small>Koç, komuta merkezinden sınıfın ısı haritasını ve canlı durumunu görür. Veli ise portal üzerinden çocuğunun o an masada olup olmadığını izler.</small>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-title reveal">
+        <h2>Sıkça Sorulan Sorular</h2>
+        <p>Aklınıza takılan soruların cevapları burada.</p>
+    </div>
+
+    <div class="faq-section">
+        <div class="faq-item reveal">
+            <h4>❓ Öğrenciler sistemi manipüle edebilir mi?</h4>
+            <p>Hayır. Sistemin içinde entegre çalışan "Canlı Yoklama" radarı bulunmaktadır. Öğrenci süreyi başlatıp masadan kalkarsa, sistem rastgele bir zamanda ekrana onay butonu çıkarır. 60 saniye içinde basılmazsa süre durdurulur ve öğretmene uyarı gider.</p>
+        </div>
+        <div class="faq-item reveal">
+            <h4>❓ Veli takibi nasıl çalışıyor?</h4>
+            <p>Öğrenci sisteme kayıt olduğunda, ona özel bir "Veli Takip Kodu" üretilir. Veli, bu kod ile sadece kendi çocuğunun istatistiklerini, net grafiklerini ve koçla yapılacak randevu tarihlerini görebilir. KVKK gereği diğer öğrencilerin verilerine erişemez.</p>
+        </div>
+        <div class="faq-item reveal">
+            <h4>❓ Hata defteri modülü ne işe yarar?</h4>
+            <p>Öğrenci çözemediği sorunun fotoğrafını çekip anında kendi paneline yükler. Bu soru öğretmenin komuta merkezine düşer. Öğretmen soruyu çözdüğünde sistem üzerinden işaretler ve öğrencinin telefonuna "Sorun Çözüldü" bildirimi gider.</p>
+        </div>
+    </div>
+
+    <div class="stats-banner reveal">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <h4>%98</h4>
+                <p>Odaklanma Artışı</p>
+            </div>
+            <div class="stat-item">
+                <h4>20K+</h4>
+                <p>Kazanılan XP</p>
+            </div>
+            <div class="stat-item">
+                <h4>7/24</h4>
+                <p>Canlı Denetim</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-logo">⚡ KatalizApp</div>
+        <p>Eğitimde Yeni Nesil Dönüşüm ve Dijital Koçluk Platformu © 2026. Tüm Hakları Saklıdır.</p>
+        <div class="footer-links">
+            <a href="login.html">Öğrenci Girişi</a>
+            <a href="ogretmen-login.html">Koç Paneli</a>
+            <a href="veli-login.html">Veli Portalı</a>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const reveals = document.querySelectorAll(".reveal");
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("active");
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            reveals.forEach(reveal => {
+                observer.observe(reveal);
+            });
+            
+            // Sayfa yüklendiğinde üst kısımdaki animasyonları hemen tetikle
+            setTimeout(() => {
+                reveals.forEach(reveal => {
+                    const windowHeight = window.innerHeight;
+                    const elementTop = reveal.getBoundingClientRect().top;
+                    if (elementTop < windowHeight) reveal.classList.add("active");
+                });
+            }, 100);
+        });
+    </script>
+</body>
+</html>
