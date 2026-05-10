@@ -294,6 +294,28 @@
         #randevuKutusu { background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(168,85,247,0.1)); border: 2px solid var(--primary); border-radius: 25px; padding: 20px; margin-bottom: 25px; text-align: left;}
         .zoom-btn { background: linear-gradient(135deg, #ef4444, #e11d48); color: white; padding: 18px; border-radius: 20px; text-decoration: none; font-weight: 900; display: none; margin-bottom: 25px; text-align: center; border: none; animation: pulse 2s infinite;}
 
+        /* 🖌️ CANLI TAHTA MODAL GÖRÜNÜMÜ */
+        #ogrenciTahtaModal { background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); }
+        #ogrenciTahtaModal .modal-content { 
+            width: 100%; max-width: 850px; background: #0f172a; border: 2px solid #a855f7; 
+            box-shadow: 0 0 50px rgba(168, 85, 247, 0.4); border-radius: 20px; padding: 20px;
+        }
+        .ogrenci-canvas-kutu {
+            width: 100%;
+            overflow: hidden;
+            border-radius: 15px;
+            background: #ffffff;
+            border: 4px solid #3b82f6;
+            margin-top: 15px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+        }
+        .canli-yayin-badge {
+            background: #ef4444; color: white; font-weight: 900; font-size: 12px;
+            padding: 5px 12px; border-radius: 12px; display: inline-flex; align-items: center; gap: 5px;
+            animation: pulseYayin 1.5s infinite;
+        }
+        @keyframes pulseYayin { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
     </style>
 </head>
 <body>
@@ -488,6 +510,22 @@
         </div>
     </div>
 
+    <div class="modal" id="ogrenciTahtaModal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h2 style="margin:0; font-size:22px; color:white;"><span style="color:#a855f7;">🖌️ Canlı</span> Tahta</h2>
+                <div class="canli-yayin-badge">🔴 KAPTAN YAYINDA</div>
+            </div>
+            <p style="color:#94a3b8; font-size:13px; margin:0 0 15px 0;">Öğretmeniniz şu an ekran üzerinde çizim yapıyor...</p>
+            
+            <div class="ogrenci-canvas-kutu">
+                <canvas id="izleyiciTahta" width="800" height="450" style="display:block; width:100%; height:auto;"></canvas>
+            </div>
+            
+            <button class="close-modal-btn" onclick="document.getElementById('ogrenciTahtaModal').style.display='none'" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: white;">Yayını Küçült</button>
+        </div>
+    </div>
+
     <div class="bottom-sheet" id="aiSheet">
         <div class="sheet-header" style="color:#a855f7;">🤖 Kaptan AI
             <button class="sheet-close" onclick="document.getElementById('aiSheet').classList.remove('open')">X</button>
@@ -527,7 +565,7 @@
         }
 
         // 🐲 BOSS MEKANİĞİ DEĞİŞKENLERİ
-        let currentBossHp = 8750; // Örnek olarak biraz canı gitmiş başlatalım
+        let currentBossHp = 8750; 
         const maxBossHp = 10000;
 
         function updateBossUI() {
@@ -536,35 +574,31 @@
             
             if (!hpFill || !hpText) return;
 
-            // Yüzde hesapla
             let percentage = (currentBossHp / maxBossHp) * 100;
             hpFill.style.width = percentage + "%";
             hpText.innerText = `${currentBossHp.toLocaleString()} / ${maxBossHp.toLocaleString()} HP`;
 
-            // Can azaldıkça renk değiştirme (Kritik vuruş efekti)
             if (percentage < 20) {
                 hpFill.style.background = "linear-gradient(90deg, #7f1d1d, #ef4444)";
             }
         }
 
         function damageBoss(amount) {
-            if (currentBossHp <= 0) return; // Zaten öldüyse işlem yapma
+            if (currentBossHp <= 0) return; 
 
             currentBossHp -= amount;
             if (currentBossHp < 0) currentBossHp = 0;
             
             updateBossUI();
             
-            // Ekrana ufak bir bildirim (Toast) çıkarabilirsin
             console.log(`💥 Ejderhaya ${amount} hasar verildi!`);
             
             if (currentBossHp === 0) {
                 alert("🏆 TEBRİKLER! Ejderha devrildi. Tüm sınıfa +500 XP!");
-                ejderhaGanimetiEkle(); // Efsanevi market eşyası!
+                ejderhaGanimetiEkle(); 
             }
         }
 
-        // 🛒 MARKET DETAYI: Ejderha ölünce markete düşen özel eşya
         function ejderhaGanimetiEkle() {
             const marketModal = document.querySelector('#marketModal .modal-content');
             if(!document.getElementById('ejderhaGanimeti')) {
@@ -578,33 +612,26 @@
             }
         }
 
-        // 🚨 KAPTAN DİKKAT: Pomodoro bittiğinde app.js içinden bu fonksiyonu çağır!
         function pomodoroTamamlandiMekanikleri() {
             damageBoss(25);
-            // Burada ayrıca app.js içindeki addXP(50) gibi fonksiyonlar da çağrılabilir
         }
        
-        // 🔮 YKS KAHİNİ GRAFİK ÇİZİM MOTORU
-        let tahminGrafigi = null; // Eski grafiği hafızada tutmak için değişken
+        let tahminGrafigi = null; 
 
         function cizTahminGrafigi() {
             const canvas = document.getElementById('tahminGrafigiCanvas');
-            if (!canvas) return; // Eğer canvas bulunamazsa hata vermemesi için güvenlik kilidi
+            if (!canvas) return; 
             
             const ctx = canvas.getContext('2d');
 
-            // Eğer ekranda zaten çizilmiş bir grafik varsa, çakışmayı önlemek için önce onu yok ediyoruz
             if (tahminGrafigi != null) {
                 tahminGrafigi.destroy();
             }
 
-            // Grafiğin altındaki o havalı neon renk geçişi (Gradient)
             let gradient = ctx.createLinearGradient(0, 0, 0, 200);
-            gradient.addColorStop(0, 'rgba(14, 165, 233, 0.5)'); // Neon Mavi
-            gradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)'); // Şeffaf
+            gradient.addColorStop(0, 'rgba(14, 165, 233, 0.5)'); 
+            gradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)'); 
 
-            // 🤖 GERÇEKÇİ TAHMİN ALGORİTMASI
-            // XP bazlı dinamik hesaplama (Ne kadar çok XP, o kadar hızlı net artışı)
             let userXp = parseInt(localStorage.getItem('kullaniciXP')) || 1000;
             let baslangicNeti = 50; 
             let artisHizi = (userXp / 400); 
@@ -615,10 +642,9 @@
                 baslangicNeti + (artisHizi * 2.5), 
                 baslangicNeti + (artisHizi * 4.1), 
                 baslangicNeti + (artisHizi * 6.5), 
-                baslangicNeti + (artisHizi * 9.5) // Haziran tahmini
+                baslangicNeti + (artisHizi * 9.5) 
             ];
             
-            // TYT maksimum 120 net olabileceği için tavan sınırı koyuyoruz
             netler = netler.map(net => Math.min(net, 120).toFixed(1));
 
             const aylar = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran (YKS)'];
@@ -630,17 +656,16 @@
                     datasets: [{
                         label: 'TYT Net Gelişimi',
                         data: netler,
-                        borderColor: '#0ea5e9', // Çizgi rengi (Neon Mavi)
+                        borderColor: '#0ea5e9', 
                         borderWidth: 3,
-                        backgroundColor: gradient, // Alt dolgu rengi
-                        fill: true, // Altını doldur
-                        tension: 0.4, // Çizgiyi yumuşat (kıvrımlı yap)
-                        pointBackgroundColor: '#10b981', // Nokta renkleri (Yeşil)
+                        backgroundColor: gradient, 
+                        fill: true, 
+                        tension: 0.4, 
+                        pointBackgroundColor: '#10b981', 
                         pointBorderColor: '#ffffff',
                         pointBorderWidth: 2,
                         pointRadius: 5,
                         pointHoverRadius: 7,
-                        // Haziran ayını (tahmin kısmını) kesik çizgili yapmak için küçük bir hile:
                         segment: {
                             borderDash: ctx => ctx.p1DataIndex === 5 ? [5, 5] : undefined
                         }
@@ -650,7 +675,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false }, // Üstteki yazıyı gizle (daha temiz dursun)
+                        legend: { display: false }, 
                         tooltip: {
                             backgroundColor: '#1e293b',
                             titleColor: '#0ea5e9',
@@ -665,7 +690,7 @@
                             beginAtZero: false,
                             suggestedMin: 40,
                             suggestedMax: 120,
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' }, // Arka plan çizgileri
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }, 
                             ticks: { color: '#94a3b8', font: { weight: 'bold' } }
                         },
                         x: {
@@ -674,14 +699,13 @@
                         }
                     },
                     animation: {
-                        duration: 2000, // 2 saniyelik çok havalı bir çizim animasyonu
+                        duration: 2000, 
                         easing: 'easeOutQuart'
                     }
                 }
             });
         }
        
-        // --- 🌙 TEMA YÖNETİMİ ---
         function temaDegistir() {
             const body = document.body;
             const btn = document.getElementById('themeBtn');
@@ -699,6 +723,10 @@
             }
         }
 
+        // --- 📡 SOKET KULAKLARI (AKILLI TAHTA İÇİN) ---
+        // Uygulamanızda soket tanımlaması app.js içinde de yapılmış olabilir ancak 
+        // tahta çizimini sayfa seviyesinde işlemek performans için daha sağlıklıdır.
+        
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('katalizTema') === 'dark') {
                 document.body.setAttribute('data-theme', 'dark');
@@ -706,8 +734,59 @@
                 document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0f172a');
             }
             
-            // Sayfa yüklendiğinde Ejderhanın canını ekrana yazdır!
             updateBossUI();
+
+            // SOKET DİNLEYİCİLERİ
+            // Eğer "socket" değişkeni bu scope'da tanımsızsa app.js'den gelen global socket'i kullanırız.
+            // window.socket'in tanımlı olduğundan emin olmak için ufak bir bekleme ekliyoruz.
+            setTimeout(() => {
+                if (typeof socket !== 'undefined') {
+                    
+                    const izleyiciCanvas = document.getElementById('izleyiciTahta');
+                    const ctx = izleyiciCanvas.getContext('2d');
+                    
+                    // Başlangıçta beyaz arka planı çiz
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, izleyiciCanvas.width, izleyiciCanvas.height);
+
+                    // 1. Öğretmen Tahtayı Açtığında
+                    socket.on('canli_tahta_durumu', (veri) => {
+                        if (veri.acik) {
+                            document.getElementById('ogrenciTahtaModal').style.display = 'flex';
+                            // Cihazın sesli bildirimi çalsın ki öğrenci fark etsin
+                            let ses = document.getElementById('bildirimSesi');
+                            if(ses) {
+                                ses.volume = 0.5;
+                                ses.play().catch(e => console.log('Otomatik ses çalma engellendi'));
+                            }
+                        } else {
+                            document.getElementById('ogrenciTahtaModal').style.display = 'none';
+                        }
+                    });
+
+                    // 2. Çizim Geldiğinde
+                    socket.on('canli_cizim_geldi', (veri) => {
+                        if (veri.temizle) {
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, izleyiciCanvas.width, izleyiciCanvas.height);
+                            return;
+                        }
+
+                        // Çizgiyi tuvale çiz
+                        ctx.beginPath();
+                        ctx.moveTo(veri.x0, veri.y0);
+                        ctx.lineTo(veri.x1, veri.y1);
+                        ctx.strokeStyle = veri.renk;
+                        ctx.lineWidth = veri.kalinlik;
+                        ctx.lineCap = 'round';
+                        ctx.stroke();
+                        ctx.closePath();
+                    });
+
+                } else {
+                    console.error("Socket.io bağlantısı bulunamadı! Lütfen app.js dosyanızın düzgün çalıştığından emin olun.");
+                }
+            }, 1000);
         });
     </script>
 </body>

@@ -75,7 +75,7 @@
         }
 
         /* Butonlar */
-        .btn-blue, .btn-red { 
+        .btn-blue, .btn-red, .btn-purple { 
             color: white; 
             border: none; 
             padding: 12px 20px; 
@@ -88,12 +88,13 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
             border: 1px solid var(--glass-border);
         }
-        .btn-blue:hover, .btn-red:hover { 
+        .btn-blue:hover, .btn-red:hover, .btn-purple:hover { 
             transform: translateY(-3px) scale(1.02); 
             box-shadow: 0 12px 25px rgba(0,0,0,0.5); 
             border-color: rgba(255,255,255,0.3);
         }
         .btn-red { background: linear-gradient(135deg, #ef4444, #be123c); }
+        .btn-purple { background: linear-gradient(135deg, #a855f7, #6b21a8); } /* Yeni buton rengi */
 
         /* Finans Kutusu */
         .finance-alert-box {
@@ -221,6 +222,42 @@
         .ay-kutusu { display: inline-block; background: rgba(255,255,255,0.1); color: var(--text-muted); padding: 4px 8px; border-radius: 6px; margin: 2px; font-size: 11px; cursor: pointer; transition: 0.3s; font-weight: 900; border: 1px solid transparent;}
         .ay-kutusu.odendi { background: rgba(16, 185, 129, 0.2); color: var(--green-neon); border-color: rgba(16, 185, 129, 0.4);}
 
+        /* Akıllı Tahta Tasarımları */
+        .tahta-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+        .tahta-toolbar {
+            display: flex;
+            gap: 15px;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            align-items: center;
+        }
+        .color-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .color-btn.active {
+            border-color: white;
+            transform: scale(1.2);
+        }
+        .tahta-canvas {
+            background: #ffffff; /* Tahta beyaz olmalı */
+            border-radius: 15px;
+            cursor: crosshair;
+            border: 4px solid var(--blue-neon);
+            box-shadow: 0 0 20px rgba(59,130,246,0.3);
+        }
+
         /* Scrollbar Gece Modu */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
@@ -255,6 +292,7 @@
             <button class="btn-blue" style="background: linear-gradient(135deg, #a855f7, #7e22ce);" onclick="sifreleriGor()">🔐 Veliler</button>
             <button class="btn-blue" style="background: linear-gradient(135deg, #34d399, #059669);" onclick="ajandaAc()">📅 Ajanda & Randevu</button>
             <button class="btn-blue" style="background: linear-gradient(135deg, #f43f5e, #be123c);" onclick="isiHaritasiAc()">🗺️ Isı Haritası</button>
+            <button class="btn-purple" onclick="akilliTahtaAc()">🖌️ Akıllı Tahta</button> 
             <button class="btn-blue" style="background: linear-gradient(135deg, #3b82f6, #2563eb);" onclick="izinIste()">🔔 Bildirim</button>
             <button class="btn-red" onclick="localStorage.clear(); window.location.href='ogretmen-login.html'">🚪 Çıkış</button>
         </div>
@@ -430,6 +468,39 @@
         </div>
     </div>
 
+    <div class="modal" id="akilliTahtaModal">
+        <div class="modal-content" style="width: 900px; max-width: 95vw; border: 2px solid var(--purple-neon); box-shadow: 0 0 40px rgba(168,85,247,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0; font-size:26px; color:var(--text-light);"><span style="color:#a855f7;">🖌️ Canlı</span> Akıllı Tahta</h2>
+                <div style="font-size:14px; font-weight:bold; color:var(--green-neon); background:rgba(16,185,129,0.1); padding:5px 15px; border-radius:10px; border:1px solid var(--green-neon);">🔴 CANLI YAYINDA</div>
+            </div>
+            
+            <div class="tahta-container">
+                <div class="tahta-toolbar">
+                    <div style="color:var(--text-muted); font-weight:bold; font-size:14px; margin-right:10px;">Renk:</div>
+                    <div class="color-btn active" style="background-color: #000000;" onclick="renkSec('#000000', this)"></div>
+                    <div class="color-btn" style="background-color: #ef4444;" onclick="renkSec('#ef4444', this)"></div>
+                    <div class="color-btn" style="background-color: #3b82f6;" onclick="renkSec('#3b82f6', this)"></div>
+                    <div class="color-btn" style="background-color: #10b981;" onclick="renkSec('#10b981', this)"></div>
+                    
+                    <div style="width:2px; height:20px; background:var(--glass-border); margin:0 10px;"></div>
+                    
+                    <div style="color:var(--text-muted); font-weight:bold; font-size:14px; margin-right:10px;">Kalınlık:</div>
+                    <input type="range" id="kalemKalinlik" min="1" max="20" value="3" style="cursor:pointer;" onchange="kalinlikGuncelle(this.value)">
+                    
+                    <div style="width:2px; height:20px; background:var(--glass-border); margin:0 10px;"></div>
+                    
+                    <button class="btn-blue" style="background:rgba(255,255,255,0.1); padding:8px 15px; font-size:13px;" onclick="silgiSec()">🧼 Silgi</button>
+                    <button class="btn-red" style="padding:8px 15px; font-size:13px;" onclick="tahtaTemizle()">🗑️ Temizle</button>
+                </div>
+                
+                <canvas id="canliTahta" width="800" height="450" class="tahta-canvas"></canvas>
+                <p style="color:var(--text-muted); font-size:13px; font-weight:bold; margin-top:5px;">Çizimleriniz anında öğrencilerin ekranına yansır. (Siyah ekran, karanlık mod için optmize edilmiştir)</p>
+            </div>
+            <button class="close-modal-btn" onclick="akilliTahtaKapat()">Kapat</button>
+        </div>
+    </div>
+
     <script>
         // Chart.js Global Teması (Dark Mode Uyumlu)
         Chart.defaults.color = '#94a3b8';
@@ -486,7 +557,107 @@
         function modalAc(id) { document.getElementById(id).style.display = 'flex'; }
         function modalKapat(id) { document.getElementById(id).style.display = 'none'; }
 
-        // --- PLAN VE TAKİP MODÜLÜ ---
+        // --- AKILLI TAHTA FONKSİYONLARI ---
+        const canvas = document.getElementById('canliTahta');
+        const ctx = canvas.getContext('2d');
+        let cizimYapiliyor = false;
+        let sonX = 0;
+        let sonY = 0;
+        let aktifRenk = '#000000'; // Başlangıç siyah kalem
+        let aktifKalinlik = 3;
+
+        // Tahta ayarları (Beyaz zemin başlat)
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        window.akilliTahtaAc = function() {
+            modalAc('akilliTahtaModal');
+            // Tahta açıldığında öğrencilere bildirim gitsin
+            socket.emit('tahta_aktiflesiyor', {kocKodu: kocKodu, acik: true});
+        };
+
+        window.akilliTahtaKapat = function() {
+            modalKapat('akilliTahtaModal');
+            socket.emit('tahta_aktiflesiyor', {kocKodu: kocKodu, acik: false});
+        };
+
+        window.renkSec = function(renk, element) {
+            aktifRenk = renk;
+            // Aktif renk butonunu vurgula
+            document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active'));
+            if(element) element.classList.add('active');
+        };
+
+        window.silgiSec = function() {
+            aktifRenk = '#ffffff'; // Silgi aslında beyaz renkli kalın bir kalem
+            document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active'));
+        };
+
+        window.kalinlikGuncelle = function(deger) {
+            aktifKalinlik = deger;
+        };
+
+        window.tahtaTemizle = function() {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Öğrencilere de temizle mesajı yolla
+            socket.emit('tahta_cizim_yap', {
+                kocKodu: kocKodu,
+                temizle: true
+            });
+        };
+
+        // Çizim olayları
+        canvas.addEventListener('mousedown', (e) => {
+            cizimYapiliyor = true;
+            let rect = canvas.getBoundingClientRect();
+            sonX = e.clientX - rect.left;
+            sonY = e.clientY - rect.top;
+        });
+
+        canvas.addEventListener('mouseup', () => cizimYapiliyor = false);
+        canvas.addEventListener('mouseout', () => cizimYapiliyor = false);
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!cizimYapiliyor) return;
+
+            let rect = canvas.getBoundingClientRect();
+            let mevcutX = e.clientX - rect.left;
+            let mevcutY = e.clientY - rect.top;
+
+            // Kendi ekranında çiz
+            cizgiCiz(sonX, sonY, mevcutX, mevcutY, aktifRenk, aktifKalinlik, false);
+
+            // Çizim koordinatlarını öğrencilere ilet
+            socket.emit('tahta_cizim_yap', {
+                kocKodu: kocKodu,
+                x0: sonX,
+                y0: sonY,
+                x1: mevcutX,
+                y1: mevcutY,
+                renk: aktifRenk,
+                kalinlik: aktifKalinlik,
+                temizle: false
+            });
+
+            sonX = mevcutX;
+            sonY = mevcutY;
+        });
+
+        // Çizim yapan asıl fonksiyon
+        function cizgiCiz(x0, y0, x1, y1, renk, kalinlik, sunucudanMi) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.strokeStyle = renk;
+            ctx.lineWidth = kalinlik;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            ctx.closePath();
+        }
+
+        // --- DİĞER MODÜL FONKSİYONLARI (Aynı kaldı) ---
+
         window.planVeTakipAc = function() {
             let secici = document.getElementById('planOgrenciSecici'); 
             secici.innerHTML = '<option value="">Öğrenci Seçin...</option>'; 
@@ -583,7 +754,6 @@
             }
         };
 
-        // --- KÜTÜPHANE ---
         window.kaynakEkle = function() { 
             let baslik = document.getElementById('kaynakBaslik').value.trim(); 
             let link = document.getElementById('kaynakLink').value.trim(); 
@@ -686,7 +856,6 @@
             } catch (e) { alert("Veriler çekilirken hata oluştu!"); } 
         }
 
-        // --- EXCEL AJANDA VE FİNANS ---
         window.ayDegistir = function(el) { el.classList.toggle('odendi'); };
 
         window.ajandaAc = function() { 
@@ -755,7 +924,7 @@
             let raporDiv = document.createElement('div'); 
             raporDiv.style.padding = "40px"; 
             raporDiv.style.fontFamily = "sans-serif"; 
-            raporDiv.style.color = "#0f172a"; // PDF çıktısı her zaman aydınlık tema renkleriyle olsun
+            raporDiv.style.color = "#0f172a"; 
             raporDiv.style.background = "#ffffff";
             
             let htmlIcerik = `

@@ -60,6 +60,25 @@ function seriKontrol() {
     }
 }
 
+// 🧠 YENİ: ARALIKLI TEKRAR (SPACED REPETITION) GÜN HESAPLAMA
+function gunFarkiHesapla(gecmisTarihStr) {
+    if (!gecmisTarihStr) return 0;
+    
+    // "15.05.2026" formatını "05/15/2026" formatına çevir (Date objesi için)
+    let parcalar = gecmisTarihStr.split('.');
+    if (parcalar.length !== 3) return 0;
+    
+    let gecmisTarih = new Date(`${parcalar[2]}-${parcalar[1]}-${parcalar[0]}`);
+    let bugun = new Date();
+    
+    // Saatleri sıfırla ki sadece gün farkını alalım
+    gecmisTarih.setHours(0, 0, 0, 0);
+    bugun.setHours(0, 0, 0, 0);
+    
+    let farkMs = Math.abs(bugun - gecmisTarih);
+    return Math.floor(farkMs / (1000 * 60 * 60 * 24));
+}
+
 function resimSikistir(file, callback) {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -843,23 +862,63 @@ socket.on('gorev_guncellendi', (tumVeriler) => {
             }
         }
 
+        // 🔥 HATA DEFTERİ (ARALIKLI TEKRAR) DÜZENLEMESİ 🔥
         if (benimVerim.hataDefteri) {
             let hataKutu = document.getElementById('hataListem');
             if(hataKutu) {
                 hataKutu.innerHTML = '';
-                if(benimVerim.hataDefteri.length === 0) {
-                    hataKutu.innerHTML = '<span style="color:var(--text-secondary); font-weight:bold;">Henüz eklenmiş soru yok.</span>';
-                }
+                
+                // Normal Bekleyen Sorular Alanı
+                let normalHataHtml = '';
+                // Spaced Repetition (Tekrar Zamanı Gelenler) Alanı
+                let tekrarHataHtml = '';
+
                 benimVerim.hataDefteri.forEach(hata => {
-                    let renk = hata.durum === 'Çözüldü' ? '#10b981' : '#f59e0b';
-                    hataKutu.innerHTML += `
-                    <div style="border-bottom: 2px solid var(--border-light); padding-bottom: 15px; margin-bottom: 15px;">
-                        <span style="background:${renk}; color:white; padding:4px 8px; border-radius:6px; font-weight:bold; font-size:11px;">${hata.durum}</span> 
-                        <b style="color:var(--text-primary); margin-left:5px;">${hata.dersKonu}</b> <br>
-                        <span style="font-size:11px; color:var(--text-secondary);">Yüklenme: ${hata.tarih}</span>
-                        <br><img src="${hata.resim}" style="max-width:100%; max-height:150px; margin-top:10px; border-radius:8px; border:1px solid var(--border-light); cursor:pointer;" onclick="window.open('${hata.resim}','_blank')">
-                    </div>`;
+                    let gunFarki = gunFarkiHesapla(hata.tarih);
+                    let tekrarZamaniGeldiMi = false;
+                    
+                    // Soru öğretmence "Çözüldü" işaretlendiyse Ebbinghaus algoritmasını uygula
+                    if (hata.durum === 'Çözüldü') {
+                        // 3. Gün, 7. Gün veya 30. Gün tekrar eşiklerinden birine ulaşmışsa
+                        if (gunFarki === 3 || gunFarki === 7 || gunFarki >= 30) {
+                            tekrarZamaniGeldiMi = true;
+                        }
+                    }
+
+                    if (tekrarZamaniGeldiMi) {
+                        // TEKRAR ALANINA EKLE
+                        tekrarHataHtml += `
+                        <div style="border: 2px dashed #ec4899; padding: 15px; margin-bottom: 15px; border-radius: 12px; background: rgba(236, 72, 153, 0.05);">
+                            <div style="display:flex; justify-content:space-between; margin-bottom: 5px;">
+                                <span style="background:#ec4899; color:white; padding:4px 8px; border-radius:6px; font-weight:900; font-size:11px;">🧠 TEKRAR ZAMANI</span> 
+                                <span style="font-size:11px; color:var(--text-secondary); font-weight:800;">${gunFarki} Gün Önce Çözüldü</span>
+                            </div>
+                            <b style="color:var(--text-primary); font-size: 13px;">${hata.dersKonu}</b>
+                            <br><img src="${hata.resim}" style="max-width:100%; max-height:150px; margin-top:10px; border-radius:8px; border:1px solid var(--border-light); cursor:pointer;" onclick="window.open('${hata.resim}','_blank')">
+                        </div>`;
+                    } else if (hata.durum === 'Bekliyor') {
+                        // BEKLEYEN (NORMAL) ALANA EKLE
+                        normalHataHtml += `
+                        <div style="border-bottom: 2px solid var(--border-light); padding-bottom: 15px; margin-bottom: 15px;">
+                            <span style="background:#f59e0b; color:white; padding:4px 8px; border-radius:6px; font-weight:bold; font-size:11px;">Bekliyor</span> 
+                            <b style="color:var(--text-primary); margin-left:5px; font-size:13px;">${hata.dersKonu}</b> <br>
+                            <span style="font-size:11px; color:var(--text-secondary);">Yüklenme: ${hata.tarih}</span>
+                            <br><img src="${hata.resim}" style="max-width:100%; max-height:150px; margin-top:10px; border-radius:8px; border:1px solid var(--border-light); cursor:pointer;" onclick="window.open('${hata.resim}','_blank')">
+                        </div>`;
+                    }
                 });
+
+                // Önce TEKRAR ZAMANI gelenleri, sonra normal bekleyenleri bas
+                if (tekrarHataHtml !== '') {
+                    hataKutu.innerHTML += `<div style="font-size:12px; font-weight:900; color:#ec4899; margin-bottom:10px; letter-spacing:0.5px;">🔥 UNUTMA EĞRİSİ: TEKRAR ÇÖZ!</div>${tekrarHataHtml}`;
+                }
+                if (normalHataHtml !== '') {
+                    hataKutu.innerHTML += `<div style="font-size:12px; font-weight:900; color:var(--text-secondary); margin-bottom:10px; margin-top:15px; letter-spacing:0.5px;">⏳ KOÇUN CEVABINI BEKLEYENLER</div>${normalHataHtml}`;
+                }
+
+                if (hataKutu.innerHTML === '') {
+                    hataKutu.innerHTML = '<span style="color:var(--text-secondary); font-weight:bold; font-size:14px;">Hata defterin tertemiz. Süpersin! 🎉</span>';
+                }
             }
         }
 

@@ -754,6 +754,22 @@ io.on('connection', (socket) => {
         io.to(veri.kocKodu).emit('ogretmene_sure_guncelle', veri); 
     });
 
+    // ==========================================
+    // 🎨 AKILLI TAHTA (CANLI YAYIN) İŞLEMLERİ
+    // ==========================================
+
+    socket.on('tahta_aktiflesiyor', (veri) => {
+        // Öğretmen tahtayı açtı veya kapattı. Bunu tüm sınıfa (veli hariç) bildir.
+        // veri = { kocKodu: 'XYZ', acik: true/false }
+        socket.to(veri.kocKodu).emit('canli_tahta_durumu', veri);
+    });
+
+    socket.on('tahta_cizim_yap', (veri) => {
+        // Öğretmenden gelen çizim koordinatlarını, fırça kalınlığını ve rengi sınıfa dağıt.
+        // veri = { kocKodu: 'XYZ', x0: 10, y0: 20, x1: 15, y1: 25, renk: '#fff', kalinlik: 3, temizle: false }
+        socket.to(veri.kocKodu).emit('canli_cizim_geldi', veri);
+    });
+
     // --- 🤖 GERÇEK GEMINI YAPAY ZEKA ASİSTAN ENTEGRASYONU ---
     
     const MEB_VERITABANI_PROMPT = `
