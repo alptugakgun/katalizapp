@@ -316,6 +316,49 @@
         }
         @keyframes pulseYayin { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
+        /* 🏆 YENİ: KUPA ODASI (ROZETLER) TASARIMI */
+        .rozet-vitrini {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px 0;
+            margin-bottom: 20px;
+            /* Scrollbar gizleme */
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .rozet-vitrini::-webkit-scrollbar { display: none; }
+        
+        .rozet-kart {
+            min-width: 90px;
+            background: var(--bg-input);
+            border: 2px solid var(--border-light);
+            border-radius: 20px;
+            padding: 15px 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+            opacity: 0.4; /* Kazanılmayanlar soluk */
+            filter: grayscale(100%);
+        }
+        .rozet-kart.kazanildi {
+            opacity: 1;
+            filter: grayscale(0%);
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(217, 119, 6, 0.1));
+            border-color: #fbbf24;
+            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.2);
+            animation: rozetParla 2s infinite alternate;
+        }
+        .rozet-kart span { font-size: 35px; }
+        .rozet-kart p { margin: 0; font-size: 11px; font-weight: 900; color: var(--text-primary); line-height: 1.2; }
+        
+        @keyframes rozetParla {
+            0% { box-shadow: 0 5px 15px rgba(251, 191, 36, 0.1); }
+            100% { box-shadow: 0 5px 25px rgba(251, 191, 36, 0.4); transform: translateY(-2px); }
+        }
     </style>
 </head>
 <body>
@@ -341,6 +384,29 @@
                     <div style="font-size: 13px; color: var(--primary); font-weight: 900; text-transform: uppercase; letter-spacing: 1px;">📅 Yaklaşan Randevun</div>
                     <div style="font-size: 20px; font-weight: 900; color: var(--text-primary); margin-top: 5px;" id="randevuTarihi"></div>
                     <div style="font-size: 15px; font-weight: 800; color: var(--text-secondary); margin-top: 5px;" id="randevuKonusu"></div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                    <h3 style="margin:0; font-size:18px; font-weight:900; color:var(--text-primary);">🏆 Başarı Rozetleri</h3>
+                    <span style="font-size:12px; font-weight:800; color:var(--text-secondary);" id="kazanilanRozetSayisi">0/4</span>
+                </div>
+                <div class="rozet-vitrini" id="rozetVitriniAlani">
+                    <div class="rozet-kart" id="rozet_1">
+                        <span>🔥</span>
+                        <p>İstikrar<br>Abidesi</p>
+                    </div>
+                    <div class="rozet-kart" id="rozet_2">
+                        <span>🍅</span>
+                        <p>Pomo<br>Canavarı</p>
+                    </div>
+                    <div class="rozet-kart" id="rozet_3">
+                        <span>🦉</span>
+                        <p>Gece<br>Kuşu</p>
+                    </div>
+                    <div class="rozet-kart" id="rozet_4">
+                        <span>🐉</span>
+                        <p>Ejderha<br>Avcısı</p>
+                    </div>
                 </div>
 
                 <div class="radyo-widget" data-intro="Çalışırken ortam sesleriyle odaklanmanı artır." data-step="1">
@@ -723,10 +789,35 @@
             }
         }
 
-        // --- 📡 SOKET KULAKLARI (AKILLI TAHTA İÇİN) ---
-        // Uygulamanızda soket tanımlaması app.js içinde de yapılmış olabilir ancak 
-        // tahta çizimini sayfa seviyesinde işlemek performans için daha sağlıklıdır.
-        
+        // --- 🚨 YENİ: SEKME DEĞİŞTİRME DEDEKTÖRÜ (HİLE KORUMASI) ---
+        // Öğrenci odak modundayken başka sekmeye veya uygulamaya geçerse yakalar
+        document.addEventListener("visibilitychange", () => {
+            let running = localStorage.getItem(`${localStorage.getItem('ogrenciKimligi')}_running`) === 'true';
+            
+            // Sadece sayaç çalışıyorken ve sayfa gizlendiğinde devreye gir
+            if (document.hidden && running) {
+                // Sayacı acımasızca durdur (app.js içindeki fonksiyonu tetikle)
+                if (typeof window.pauseTimer === "function") {
+                    window.pauseTimer(false); 
+                    
+                    let statusEl = document.getElementById('statusText');
+                    if(statusEl) {
+                        statusEl.innerHTML = "🚨 ODAK KAYBI! Başka bir sekmeye geçtiğin tespit edildi.";
+                        statusEl.style.backgroundColor = "#fee2e2";
+                        statusEl.style.color = "#dc2626";
+                    }
+                    
+                    // Öğretmenin paneline o "Ötecek Kırmızı Alarmı" gönder
+                    if (typeof socket !== 'undefined') {
+                        socket.emit('sekme_degistirdi_hilesi', { 
+                            ogrenciAd: localStorage.getItem('ogrenciKimligi'), 
+                            kocKodu: localStorage.getItem('kocKodu') 
+                        });
+                    }
+                }
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('katalizTema') === 'dark') {
                 document.body.setAttribute('data-theme', 'dark');
@@ -736,24 +827,18 @@
             
             updateBossUI();
 
-            // SOKET DİNLEYİCİLERİ
-            // Eğer "socket" değişkeni bu scope'da tanımsızsa app.js'den gelen global socket'i kullanırız.
-            // window.socket'in tanımlı olduğundan emin olmak için ufak bir bekleme ekliyoruz.
             setTimeout(() => {
                 if (typeof socket !== 'undefined') {
                     
                     const izleyiciCanvas = document.getElementById('izleyiciTahta');
                     const ctx = izleyiciCanvas.getContext('2d');
                     
-                    // Başlangıçta beyaz arka planı çiz
                     ctx.fillStyle = '#ffffff';
                     ctx.fillRect(0, 0, izleyiciCanvas.width, izleyiciCanvas.height);
 
-                    // 1. Öğretmen Tahtayı Açtığında
                     socket.on('canli_tahta_durumu', (veri) => {
                         if (veri.acik) {
                             document.getElementById('ogrenciTahtaModal').style.display = 'flex';
-                            // Cihazın sesli bildirimi çalsın ki öğrenci fark etsin
                             let ses = document.getElementById('bildirimSesi');
                             if(ses) {
                                 ses.volume = 0.5;
@@ -764,7 +849,6 @@
                         }
                     });
 
-                    // 2. Çizim Geldiğinde
                     socket.on('canli_cizim_geldi', (veri) => {
                         if (veri.temizle) {
                             ctx.fillStyle = '#ffffff';
@@ -772,7 +856,6 @@
                             return;
                         }
 
-                        // Çizgiyi tuvale çiz
                         ctx.beginPath();
                         ctx.moveTo(veri.x0, veri.y0);
                         ctx.lineTo(veri.x1, veri.y1);

@@ -470,6 +470,8 @@ io.on('connection', (socket) => {
                 let idx = ogrenci.hataDefteri.findIndex(h => h.id === veri.soruId); 
                 if (idx !== -1) { 
                     ogrenci.hataDefteri[idx].durum = 'Çözüldü'; 
+                    ogrenci.hataDefteri[idx].tarih = new Date().toLocaleDateString('tr-TR');
+                    
                     ogrenci.markModified('hataDefteri'); 
                     await ogrenci.save(); 
                     
@@ -759,15 +761,18 @@ io.on('connection', (socket) => {
     // ==========================================
 
     socket.on('tahta_aktiflesiyor', (veri) => {
-        // Öğretmen tahtayı açtı veya kapattı. Bunu tüm sınıfa (veli hariç) bildir.
-        // veri = { kocKodu: 'XYZ', acik: true/false }
         socket.to(veri.kocKodu).emit('canli_tahta_durumu', veri);
     });
 
     socket.on('tahta_cizim_yap', (veri) => {
-        // Öğretmenden gelen çizim koordinatlarını, fırça kalınlığını ve rengi sınıfa dağıt.
-        // veri = { kocKodu: 'XYZ', x0: 10, y0: 20, x1: 15, y1: 25, renk: '#fff', kalinlik: 3, temizle: false }
         socket.to(veri.kocKodu).emit('canli_cizim_geldi', veri);
+    });
+
+    // ==========================================
+    // 🚨 HİLE (SEKME DEĞİŞTİRME) SİNYALİ
+    // ==========================================
+    socket.on('sekme_degistirdi_hilesi', (veri) => {
+        io.to(veri.kocKodu).emit('hile_tespiti', veri);
     });
 
     // --- 🤖 GERÇEK GEMINI YAPAY ZEKA ASİSTAN ENTEGRASYONU ---
@@ -809,7 +814,6 @@ io.on('connection', (socket) => {
             {"rapor": "html formatındaki rapor metni", "oneri": "görev cümlesi"}
             `;
 
-            // 🔥 ZIRHLI AI BAĞLANTISI (JSON FORMAT ZORUNLULUĞU)
             const model = genAI.getGenerativeModel({ 
                 model: "gemini-1.5-pro",
                 generationConfig: { responseMimeType: "application/json" }
@@ -818,7 +822,7 @@ io.on('connection', (socket) => {
             const result = await model.generateContent(prompt);
             const response = await result.response;
             
-            let aiData = JSON.parse(response.text()); // Zırh sayesinde metin temizlemeye gerek kalmadı
+            let aiData = JSON.parse(response.text()); 
 
             io.to(veri.kocKodu).emit('yapay_zeka_raporu', { 
                 ad: veri.ogrenciAd, 
@@ -835,7 +839,6 @@ io.on('connection', (socket) => {
         } 
     });
 
-// --- 🤖 ÖĞRENCİ PANELİ: GERÇEK YAPAY ZEKA SOHBET BOTU ---
     socket.on('ogrenci_chatbot_mesaji', async (veri) => { 
         try { 
             let ogrenci = await Ogrenci.findOne({ ogrenciAd: veri.ogrenciAd, kocKodu: veri.kocKodu }); 
@@ -865,7 +868,6 @@ io.on('connection', (socket) => {
             {"cevap": "senin yazacağın cevap metni"}
             `;
 
-            // 🔥 ZIRHLI AI BAĞLANTISI (JSON FORMAT ZORUNLULUĞU)
             const model = genAI.getGenerativeModel({ 
                 model: "gemini-1.5-flash",
                 generationConfig: { responseMimeType: "application/json" }

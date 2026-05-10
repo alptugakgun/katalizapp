@@ -26,7 +26,7 @@ function sistemBildirimi(baslik, mesaj) {
     } 
 }
 
-// 🔥 YENİ: DUOLINGO TARZI SERİ (STREAK) SİSTEMİ
+// 🔥 DUOLINGO TARZI SERİ (STREAK) SİSTEMİ
 function seriKontrol() {
     let bugun = new Date().toLocaleDateString('tr-TR');
     let sonGiris = localStorage.getItem(`${aktifOgrenci}_sonGirisTarihi`);
@@ -37,19 +37,18 @@ function seriKontrol() {
             let dun = new Date();
             dun.setDate(dun.getDate() - 1);
             if (sonGiris === dun.toLocaleDateString('tr-TR')) {
-                seri++; // Her gün girerse seriyi artır
+                seri++; 
             } else {
-                seri = 1; // Bir gün atlarsa acımasızca sıfırla
+                seri = 1; 
                 sistemBildirimi("❄️ Serin Bozuldu!", "Dün çalışmadığın için serin sıfırlandı. Bugün yeni bir başlangıç yapıyoruz!");
             }
         } else {
-            seri = 1; // Sisteme ilk girişi
+            seri = 1; 
         }
         
         localStorage.setItem(`${aktifOgrenci}_sonGirisTarihi`, bugun);
         localStorage.setItem(`${aktifOgrenci}_seriGunu`, seri);
         
-        // Günlük Görev Otomatik Ekleme
         setTimeout(() => {
             socket.emit('calisma_plani_ekle', {
                 ogrenciAd: aktifOgrenci,
@@ -60,18 +59,60 @@ function seriKontrol() {
     }
 }
 
-// 🧠 YENİ: ARALIKLI TEKRAR (SPACED REPETITION) GÜN HESAPLAMA
+// 🏆 YENİ: KUPA ODASI / ROZET KONTROL MOTORU
+function rozetleriKontrolEt() {
+    let kazanilan = 0;
+    let bugun = new Date().toLocaleDateString('tr-TR');
+
+    let rozet1 = document.getElementById('rozet_1');
+    let rozet2 = document.getElementById('rozet_2');
+    let rozet3 = document.getElementById('rozet_3');
+    let rozet4 = document.getElementById('rozet_4');
+
+    // 1. İstikrar Abidesi (7 Gün Seri)
+    let seri = parseInt(localStorage.getItem(`${aktifOgrenci}_seriGunu`)) || 0;
+    if (seri >= 7 && rozet1) {
+        rozet1.classList.add('kazanildi');
+        kazanilan++;
+    }
+
+    // 2. Pomo Canavarı (Bugün 5 Pomodoro)
+    let bugunPomo = benimAktiviteGecmisim.filter(a => a.tarih === bugun && a.tip === 'Pomodoro').length;
+    if (bugunPomo >= 5 && rozet2) {
+        rozet2.classList.add('kazanildi');
+        kazanilan++;
+    }
+
+    // 3. Gece Kuşu (00:00 - 05:59 arası çalışma)
+    let geceCalistiMi = benimAktiviteGecmisim.some(a => {
+        let saatStr = a.saat.split(':')[0];
+        let saat = parseInt(saatStr);
+        return (saat >= 0 && saat <= 5);
+    });
+    if (geceCalistiMi && rozet3) {
+        rozet3.classList.add('kazanildi');
+        kazanilan++;
+    }
+
+    // 4. Ejderha Avcısı (Boss Kesildi mi?)
+    if (localStorage.getItem(`${aktifOgrenci}_ejderhaAvcisi`) === 'true' && rozet4) {
+        rozet4.classList.add('kazanildi');
+        kazanilan++;
+    }
+
+    let gosterge = document.getElementById('kazanilanRozetSayisi');
+    if(gosterge) gosterge.innerText = `${kazanilan}/4`;
+}
+
+// 🧠 ARALIKLI TEKRAR (SPACED REPETITION) GÜN HESAPLAMA
 function gunFarkiHesapla(gecmisTarihStr) {
     if (!gecmisTarihStr) return 0;
-    
-    // "15.05.2026" formatını "05/15/2026" formatına çevir (Date objesi için)
     let parcalar = gecmisTarihStr.split('.');
     if (parcalar.length !== 3) return 0;
     
     let gecmisTarih = new Date(`${parcalar[2]}-${parcalar[1]}-${parcalar[0]}`);
     let bugun = new Date();
     
-    // Saatleri sıfırla ki sadece gün farkını alalım
     gecmisTarih.setHours(0, 0, 0, 0);
     bugun.setHours(0, 0, 0, 0);
     
@@ -420,7 +461,6 @@ window.startTimer = function() {
                 window.pauseTimer(true); 
                 sistemBildirimi("🍅 Pomodoro Bitti!", "Harika odaklandın, şimdi mola vakti."); 
                 
-                // 🔥 KAPTANIN EMRİ: EJDERHAYA VURAN SİSTEM! 🔥
                 if(typeof pomodoroTamamlandiMekanikleri === 'function') {
                     pomodoroTamamlandiMekanikleri();
                 }
@@ -500,7 +540,6 @@ window.pauseTimer = function(otomatikMi = false) {
     } 
 };
 
-// 📅 ÇALIŞMA PROGRAMI FONKSİYONLARI (YENİ)
 window.planEkle = function() {
     let input = document.getElementById('yeniPlanInput');
     if(input && input.value.trim() !== '') {
@@ -514,7 +553,7 @@ window.planEkle = function() {
 };
 
 window.planTamamla = function(id, currentStatus) {
-    if(!currentStatus) sesCal(); // Sadece tamamlandığında ses çal
+    if(!currentStatus) sesCal(); 
     socket.emit('calisma_plani_tamamla', {
         ogrenciAd: aktifOgrenci,
         kocKodu: kocKodu,
@@ -718,6 +757,12 @@ window.odulAl = function(odulIsmi, bedel) {
     if(confirm(`${odulIsmi} almak istiyor musun?`)) { 
         socket.emit('odul_satin_al', { ogrenciAd: aktifOgrenci, odul: odulIsmi, bedel: bedel, kocKodu: kocKodu }); 
         document.getElementById('marketModal').style.display = 'none'; 
+        
+        // 🔥 Ejderha Avcısı Rozeti Kontrolü
+        if(odulIsmi.includes('Ejderha')) {
+            localStorage.setItem(`${aktifOgrenci}_ejderhaAvcisi`, 'true');
+            rozetleriKontrolEt();
+        }
     } 
 };
 
@@ -832,6 +877,9 @@ socket.on('gorev_guncellendi', (tumVeriler) => {
         benimTamamlananKaynaklar = benimVerim.tamamlananKaynaklar || [];
         benimAktiviteGecmisim = benimVerim.aktiviteGecmisi || [];
 
+        // 🔥 YENİ: ROZET MOTORUNU ÇALIŞTIR
+        rozetleriKontrolEt();
+
         if (benimVerim.sonrakiDers && benimVerim.sonrakiDers.trim() !== '') {
             let d = new Date(benimVerim.sonrakiDers);
             let tarihStr = d.toLocaleString('tr-TR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
@@ -868,25 +916,20 @@ socket.on('gorev_guncellendi', (tumVeriler) => {
             if(hataKutu) {
                 hataKutu.innerHTML = '';
                 
-                // Normal Bekleyen Sorular Alanı
                 let normalHataHtml = '';
-                // Spaced Repetition (Tekrar Zamanı Gelenler) Alanı
                 let tekrarHataHtml = '';
 
                 benimVerim.hataDefteri.forEach(hata => {
                     let gunFarki = gunFarkiHesapla(hata.tarih);
                     let tekrarZamaniGeldiMi = false;
                     
-                    // Soru öğretmence "Çözüldü" işaretlendiyse Ebbinghaus algoritmasını uygula
                     if (hata.durum === 'Çözüldü') {
-                        // 3. Gün, 7. Gün veya 30. Gün tekrar eşiklerinden birine ulaşmışsa
                         if (gunFarki === 3 || gunFarki === 7 || gunFarki >= 30) {
                             tekrarZamaniGeldiMi = true;
                         }
                     }
 
                     if (tekrarZamaniGeldiMi) {
-                        // TEKRAR ALANINA EKLE
                         tekrarHataHtml += `
                         <div style="border: 2px dashed #ec4899; padding: 15px; margin-bottom: 15px; border-radius: 12px; background: rgba(236, 72, 153, 0.05);">
                             <div style="display:flex; justify-content:space-between; margin-bottom: 5px;">
@@ -897,7 +940,6 @@ socket.on('gorev_guncellendi', (tumVeriler) => {
                             <br><img src="${hata.resim}" style="max-width:100%; max-height:150px; margin-top:10px; border-radius:8px; border:1px solid var(--border-light); cursor:pointer;" onclick="window.open('${hata.resim}','_blank')">
                         </div>`;
                     } else if (hata.durum === 'Bekliyor') {
-                        // BEKLEYEN (NORMAL) ALANA EKLE
                         normalHataHtml += `
                         <div style="border-bottom: 2px solid var(--border-light); padding-bottom: 15px; margin-bottom: 15px;">
                             <span style="background:#f59e0b; color:white; padding:4px 8px; border-radius:6px; font-weight:bold; font-size:11px;">Bekliyor</span> 
@@ -908,7 +950,6 @@ socket.on('gorev_guncellendi', (tumVeriler) => {
                     }
                 });
 
-                // Önce TEKRAR ZAMANI gelenleri, sonra normal bekleyenleri bas
                 if (tekrarHataHtml !== '') {
                     hataKutu.innerHTML += `<div style="font-size:12px; font-weight:900; color:#ec4899; margin-bottom:10px; letter-spacing:0.5px;">🔥 UNUTMA EĞRİSİ: TEKRAR ÇÖZ!</div>${tekrarHataHtml}`;
                 }
@@ -1017,6 +1058,8 @@ socket.on('eski_verileri_yukle', (tumVeriler) => {
     if(benimVerim) {
         benimTamamlananKaynaklar = benimVerim.tamamlananKaynaklar || [];
         benimAktiviteGecmisim = benimVerim.aktiviteGecmisi || [];
+        // ROZET MOTORU BAŞLAT
+        rozetleriKontrolEt();
     }
 });
 
@@ -1123,7 +1166,6 @@ socket.on('chatbot_cevabi', (cevapMetni) => {
 
 document.addEventListener("DOMContentLoaded", () => {
     
-    // Uygulama yüklenir yüklenmez Duolingo Seri sistemini çalıştır
     seriKontrol();
     
     if(sinavSecimi) {
@@ -1205,7 +1247,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.pauseTimer(true); 
                 sistemBildirimi("🍅 Pomodoro Bitti!", "Harika odaklandın, şimdi mola vakti."); 
                 
-                // 🔥 KAPTANIN EMRİ: EJDERHAYA VURAN SİSTEM! 🔥
                 if(typeof pomodoroTamamlandiMekanikleri === 'function') {
                     pomodoroTamamlandiMekanikleri();
                 }
