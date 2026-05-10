@@ -400,6 +400,11 @@ window.startTimer = function() {
                 sesCal(); 
                 window.pauseTimer(true); 
                 sistemBildirimi("🍅 Pomodoro Bitti!", "Harika odaklandın, şimdi mola vakti."); 
+                
+                // 🔥 KAPTANIN EMRİ: EJDERHAYA VURAN SİSTEM! 🔥
+                if(typeof pomodoroTamamlandiMekanikleri === 'function') {
+                    pomodoroTamamlandiMekanikleri();
+                }
             } 
             
             socket.emit('sure_guncelle', { ogrenciAd: aktifOgrenci, sure: display.innerHTML, kocKodu: kocKodu }); 
@@ -1140,6 +1145,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 sesCal(); 
                 window.pauseTimer(true); 
                 sistemBildirimi("🍅 Pomodoro Bitti!", "Harika odaklandın, şimdi mola vakti."); 
+                
+                // 🔥 KAPTANIN EMRİ: EJDERHAYA VURAN SİSTEM! 🔥
+                if(typeof pomodoroTamamlandiMekanikleri === 'function') {
+                    pomodoroTamamlandiMekanikleri();
+                }
             } 
             
             socket.emit('sure_guncelle', { ogrenciAd: aktifOgrenci, sure: display.innerHTML, kocKodu: kocKodu }); 

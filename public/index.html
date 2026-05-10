@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
     
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script>
         if (!localStorage.getItem('ogrenciKimligi')) {
             window.location.href = 'login.html';
@@ -168,6 +170,16 @@
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* 🐉 BOSS SAVAŞI WIDGET'I */
+        .boss-container { background: linear-gradient(135deg, #1e1b4b, #312e81); border-radius: 25px; padding: 20px; margin-bottom: 25px; border: 2px solid #4f46e5; box-shadow: 0 10px 20px rgba(49, 46, 129, 0.4); position: relative; overflow: hidden; }
+        .boss-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; z-index: 2; position: relative; }
+        .boss-title { color: #f8fafc; font-size: 18px; font-weight: 900; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .boss-level { background: #ef4444; color: white; padding: 4px 10px; border-radius: 10px; font-size: 12px; font-weight: 900; }
+        .hp-bg { background: rgba(0,0,0,0.4); height: 25px; border-radius: 15px; overflow: hidden; position: relative; border: 2px solid rgba(255,255,255,0.1); margin-bottom: 10px; }
+        .hp-fill { background: linear-gradient(90deg, #ef4444, #f97316); height: 100%; width: 100%; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hp-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: 900; font-size: 13px; text-shadow: 0 1px 2px black; font-variant-numeric: tabular-nums; }
+        .boss-info { font-size: 12px; color: #a5b4fc; font-weight: 800; text-align: center; margin: 0; }
+        
         /* 🎯 Alt Navigasyon (Bottom Bar) */
         .bottom-nav {
             position: fixed;
@@ -342,6 +354,7 @@
                 <div class="tools-grid">
                     <button class="tool-btn bg-hata" onclick="document.getElementById('hataModal').style.display='flex'"><span>💣</span> Hata Defteri</button>
                     <button class="tool-btn bg-net" onclick="document.getElementById('netModal').style.display='flex'"><span>📈</span> Optik Analiz</button>
+                    <button class="tool-btn" style="background: linear-gradient(135deg, #0ea5e9, #0369a1);" onclick="document.getElementById('analizModal').style.display='flex'; cizTahminGrafigi();"><span>🔮</span> YKS Kahini</button>
                     <button class="tool-btn bg-lib" onclick="document.getElementById('kutuphaneModal').style.display='flex'"><span>📚</span> Kütüphane</button>
                     <button class="tool-btn bg-market" onclick="document.getElementById('marketModal').style.display='flex'"><span>🛒</span> XP Market</button>
                     <button class="tool-btn bg-duel" onclick="document.getElementById('duelloModal').style.display='flex'"><span>⚔️</span> Düello Arenası</button>
@@ -352,6 +365,18 @@
 
             <div id="tab-tasks" class="tab-content">
                 
+                <div class="boss-container">
+                    <div class="boss-header">
+                        <h4 class="boss-title">🐉 Organik Kimya Ejderhası</h4>
+                        <span class="boss-level">Seviye 5</span>
+                    </div>
+                    <div class="hp-bg">
+                        <div class="hp-fill" id="bossHpFill" style="width: 100%;"></div>
+                        <div class="hp-text" id="bossHpText">10.000 / 10.000 HP</div>
+                    </div>
+                    <p class="boss-info">Sınıfça tamamlanan her Pomodoro, canavara 25 Hasar vurur!</p>
+                </div>
+
                 <div class="task-header">
                     <h3>📋 Günlük Planım</h3>
                     <button onclick="document.getElementById('planModal').style.display='flex'" style="background:var(--primary); color:white; border:none; padding:10px 15px; border-radius:15px; font-weight:900;">+ Ekle</button>
@@ -370,7 +395,8 @@
                 <button onclick="aktiviteGoster()" class="action-btn" style="width:100%; background:var(--bg-input); color:var(--text-primary); border:2px solid var(--border-light); margin-top:20px;">⏱️ Aktivite Günlüğümü Gör</button>
             </div>
 
-        </div> <nav class="bottom-nav">
+        </div> 
+        <nav class="bottom-nav">
             <div class="nav-item active" onclick="switchTab('tab-home', this)">
                 <span>⏱️</span>
                 <p>Odak</p>
@@ -393,7 +419,9 @@
             <button class="fab fab-ai" onclick="document.getElementById('aiSheet').classList.add('open')">🤖</button>
         </div>
 
-    </div> <div class="modal" id="planModal">
+    </div> 
+    
+    <div class="modal" id="planModal">
         <div class="modal-content">
             <h2 style="color:var(--primary); margin-top:0;">Plan Ekle</h2>
             <input type="text" id="yeniPlanInput" class="select-box" placeholder="Ne çalışacaksın?" style="width:100%; margin-bottom:15px; box-sizing:border-box;">
@@ -435,6 +463,31 @@
 
     <div class="modal" id="avatarModal"><div class="modal-content"><h3>Karakter Seç</h3><div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom: 20px;"><div style="font-size:35px; background:var(--bg-input); padding:10px; border-radius:50%;" onclick="avatarSec('👤')">👤</div><div style="font-size:35px; background:var(--bg-input); padding:10px; border-radius:50%;" onclick="avatarSec('👨‍🎓')">👨‍🎓</div><div style="font-size:35px; background:var(--bg-input); padding:10px; border-radius:50%;" onclick="avatarSec('👩‍🎓')">👩‍🎓</div><div style="font-size:35px; background:var(--bg-input); padding:10px; border-radius:50%;" onclick="avatarSec('🥷')">🥷</div></div><div style="background: var(--bg-input); padding: 15px; border-radius: 15px; border: 2px dashed #fbbf24;"><p style="margin:0; font-size:12px; font-weight:900; color:#d97706;">Veli Takip Kodun:</p><h2 id="veliKoduGosterge" style="margin:5px 0 0 0; color:#b45309;">V-XXXX</h2></div><button class="close-modal-btn" onclick="document.getElementById('avatarModal').style.display='none'">Kapat</button></div></div>
 
+    <div class="modal" id="analizModal">
+        <div class="modal-content" style="max-width: 450px;">
+            <h2 style="color:#0ea5e9; margin-top:0;">🔮 Yıl Sonu Tahmin Raporu</h2>
+            
+            <div style="background: var(--bg-input); padding: 15px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border: 2px solid var(--border-light);">
+                <div>
+                    <div style="font-size: 12px; font-weight: 900; color: var(--text-secondary);">ŞU ANKİ FORMUN</div>
+                    <div style="font-size: 24px; font-weight: 900; color: #10b981;">🟢 Yükselişte</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 12px; font-weight: 900; color: var(--text-secondary);">HEDEF NETİN</div>
+                    <div style="font-size: 24px; font-weight: 900; color: #3b82f6;">105.0</div>
+                </div>
+            </div>
+
+            <div style="background: var(--bg-body); padding: 15px; border-radius: 20px; border: 2px solid var(--border-light); margin-bottom: 20px;">
+                <canvas id="tahminGrafigiCanvas" height="200"></canvas>
+            </div>
+            
+            <p style="font-size: 13px; color: var(--text-secondary); font-weight: 800; margin-bottom: 20px;">* Bu grafik son 5 denemedeki net artış hızını, tamamladığın pomodoro sayısını ve istikrarını yapay zeka ile analiz ederek haziran ayındaki tahmini netini hesaplar.</p>
+
+            <button class="close-modal-btn" onclick="document.getElementById('analizModal').style.display='none'">Kapat</button>
+        </div>
+    </div>
+
     <div class="bottom-sheet" id="aiSheet">
         <div class="sheet-header" style="color:#a855f7;">🤖 Kaptan AI
             <button class="sheet-close" onclick="document.getElementById('aiSheet').classList.remove('open')">X</button>
@@ -473,6 +526,161 @@
             window.scrollTo(0,0);
         }
 
+        // 🐲 BOSS MEKANİĞİ DEĞİŞKENLERİ
+        let currentBossHp = 8750; // Örnek olarak biraz canı gitmiş başlatalım
+        const maxBossHp = 10000;
+
+        function updateBossUI() {
+            const hpFill = document.getElementById('bossHpFill');
+            const hpText = document.getElementById('bossHpText');
+            
+            if (!hpFill || !hpText) return;
+
+            // Yüzde hesapla
+            let percentage = (currentBossHp / maxBossHp) * 100;
+            hpFill.style.width = percentage + "%";
+            hpText.innerText = `${currentBossHp.toLocaleString()} / ${maxBossHp.toLocaleString()} HP`;
+
+            // Can azaldıkça renk değiştirme (Kritik vuruş efekti)
+            if (percentage < 20) {
+                hpFill.style.background = "linear-gradient(90deg, #7f1d1d, #ef4444)";
+            }
+        }
+
+        function damageBoss(amount) {
+            if (currentBossHp <= 0) return; // Zaten öldüyse işlem yapma
+
+            currentBossHp -= amount;
+            if (currentBossHp < 0) currentBossHp = 0;
+            
+            updateBossUI();
+            
+            // Ekrana ufak bir bildirim (Toast) çıkarabilirsin
+            console.log(`💥 Ejderhaya ${amount} hasar verildi!`);
+            
+            if (currentBossHp === 0) {
+                alert("🏆 TEBRİKLER! Ejderha devrildi. Tüm sınıfa +500 XP!");
+                ejderhaGanimetiEkle(); // Efsanevi market eşyası!
+            }
+        }
+
+        // 🛒 MARKET DETAYI: Ejderha ölünce markete düşen özel eşya
+        function ejderhaGanimetiEkle() {
+            const marketModal = document.querySelector('#marketModal .modal-content');
+            if(!document.getElementById('ejderhaGanimeti')) {
+                const ganimetHTML = `
+                <div id="ejderhaGanimeti" class="market-item" style="background: linear-gradient(135deg, #f59e0b, #ef4444); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 900; color: white; border: 2px solid #fbbf24; box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4); animation: pulse 2s infinite;">
+                    <span>🐉 Ejderha Tılsımı (Özel Görev Geçişi)</span>
+                    <button style="background: white; color: #ef4444; border: none; padding: 8px 12px; border-radius: 10px; font-weight: 900;" onclick="odulAl('Ejderha Tılsımı', 3000)">3000 XP</button>
+                </div>`;
+                const closeBtn = marketModal.querySelector('.close-modal-btn');
+                closeBtn.insertAdjacentHTML('beforebegin', ganimetHTML);
+            }
+        }
+
+        // 🚨 KAPTAN DİKKAT: Pomodoro bittiğinde app.js içinden bu fonksiyonu çağır!
+        function pomodoroTamamlandiMekanikleri() {
+            damageBoss(25);
+            // Burada ayrıca app.js içindeki addXP(50) gibi fonksiyonlar da çağrılabilir
+        }
+       
+        // 🔮 YKS KAHİNİ GRAFİK ÇİZİM MOTORU
+        let tahminGrafigi = null; // Eski grafiği hafızada tutmak için değişken
+
+        function cizTahminGrafigi() {
+            const canvas = document.getElementById('tahminGrafigiCanvas');
+            if (!canvas) return; // Eğer canvas bulunamazsa hata vermemesi için güvenlik kilidi
+            
+            const ctx = canvas.getContext('2d');
+
+            // Eğer ekranda zaten çizilmiş bir grafik varsa, çakışmayı önlemek için önce onu yok ediyoruz
+            if (tahminGrafigi != null) {
+                tahminGrafigi.destroy();
+            }
+
+            // Grafiğin altındaki o havalı neon renk geçişi (Gradient)
+            let gradient = ctx.createLinearGradient(0, 0, 0, 200);
+            gradient.addColorStop(0, 'rgba(14, 165, 233, 0.5)'); // Neon Mavi
+            gradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)'); // Şeffaf
+
+            // 🤖 GERÇEKÇİ TAHMİN ALGORİTMASI
+            // XP bazlı dinamik hesaplama (Ne kadar çok XP, o kadar hızlı net artışı)
+            let userXp = parseInt(localStorage.getItem('kullaniciXP')) || 1000;
+            let baslangicNeti = 50; 
+            let artisHizi = (userXp / 400); 
+            
+            let netler = [
+                baslangicNeti, 
+                baslangicNeti + (artisHizi * 1.2), 
+                baslangicNeti + (artisHizi * 2.5), 
+                baslangicNeti + (artisHizi * 4.1), 
+                baslangicNeti + (artisHizi * 6.5), 
+                baslangicNeti + (artisHizi * 9.5) // Haziran tahmini
+            ];
+            
+            // TYT maksimum 120 net olabileceği için tavan sınırı koyuyoruz
+            netler = netler.map(net => Math.min(net, 120).toFixed(1));
+
+            const aylar = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran (YKS)'];
+
+            tahminGrafigi = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: aylar,
+                    datasets: [{
+                        label: 'TYT Net Gelişimi',
+                        data: netler,
+                        borderColor: '#0ea5e9', // Çizgi rengi (Neon Mavi)
+                        borderWidth: 3,
+                        backgroundColor: gradient, // Alt dolgu rengi
+                        fill: true, // Altını doldur
+                        tension: 0.4, // Çizgiyi yumuşat (kıvrımlı yap)
+                        pointBackgroundColor: '#10b981', // Nokta renkleri (Yeşil)
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        // Haziran ayını (tahmin kısmını) kesik çizgili yapmak için küçük bir hile:
+                        segment: {
+                            borderDash: ctx => ctx.p1DataIndex === 5 ? [5, 5] : undefined
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }, // Üstteki yazıyı gizle (daha temiz dursun)
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            titleColor: '#0ea5e9',
+                            bodyFont: { weight: 'bold' },
+                            padding: 10,
+                            cornerRadius: 8,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            suggestedMin: 40,
+                            suggestedMax: 120,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }, // Arka plan çizgileri
+                            ticks: { color: '#94a3b8', font: { weight: 'bold' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { weight: 'bold', size: 10 } }
+                        }
+                    },
+                    animation: {
+                        duration: 2000, // 2 saniyelik çok havalı bir çizim animasyonu
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+       
         // --- 🌙 TEMA YÖNETİMİ ---
         function temaDegistir() {
             const body = document.body;
@@ -497,6 +705,9 @@
                 document.getElementById('themeBtn').innerText = '☀️';
                 document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0f172a');
             }
+            
+            // Sayfa yüklendiğinde Ejderhanın canını ekrana yazdır!
+            updateBossUI();
         });
     </script>
 </body>
