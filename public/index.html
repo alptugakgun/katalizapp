@@ -44,20 +44,24 @@
         .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
         .reveal.active { opacity: 1; transform: translateY(0); }
 
-        /* 📱 Navbar (Cam Efekti) */
+        /* 📱 Navbar (Cam Efekti) - SABİTLENDİ VE KARIŞMA ÖNLENDİ */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 5vw;
-            background: rgba(15, 23, 42, 0.6);
+            padding: 15px 5vw;
+            background: rgba(15, 23, 42, 0.95); /* Arka plan solidleştirildi */
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             box-shadow: 0 5px 30px rgba(0,0,0,0.5);
-            position: sticky;
+            position: fixed; /* Fixed yapıldı ki her cihazda kaya gibi dursun */
             top: 0;
-            z-index: 100;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 9999; /* Maksimum katman gücü, hiçbir şeyin altında ezilmez */
             border-bottom: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
         }
 
         .logo {
@@ -105,14 +109,14 @@
         /* ⚡ Hero Section */
         .hero {
             text-align: center;
-            padding: 140px 20px 100px;
+            padding: 160px 20px 100px; /* Header fixed olduğu için üst padding artırıldı */
             max-width: 950px;
             margin: 0 auto;
             position: relative;
         }
 
         .badge {
-            background: rgba(59, 130, 246, 0.15);
+            background: rgba(54, 126, 241, 0.15);
             color: #60a5fa;
             border: 1px solid rgba(59, 130, 246, 0.3);
             padding: 8px 22px;
@@ -140,12 +144,9 @@
         }
         
         .hero h1 span {
-            background: linear-gradient(135deg, #a855f7, #ec4899, #f43f5e);
-            -webkit-background-clip: text;
-            background-clip: text; 
-            -webkit-text-fill-color: transparent;
+            color: #f59e0b; /* Okunabilirliği artırmak için düz ve parlak renk yapıldı */
             display: inline-block;
-            filter: drop-shadow(0 0 15px rgba(236, 72, 153, 0.4));
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
         }
 
         .hero p {
@@ -260,11 +261,13 @@
         .footer-links a { color: var(--primary); text-decoration: none; font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s;}
         .footer-links a:hover { color: var(--accent); text-shadow: 0 0 10px var(--accent-glow);}
 
-        /* 📱 Responsive */
+        /* 📱 Responsive - MOBİLDE KARIŞMA ÖNLENDİ */
         @media (max-width: 900px) {
-            header { flex-direction: column; gap: 20px; padding: 20px; }
-            .nav-links { flex-wrap: wrap; justify-content: center; }
-            .hero h1 { font-size: 45px; }
+            header { flex-direction: column; gap: 15px; padding: 15px; }
+            .nav-links { flex-wrap: wrap; justify-content: center; gap: 10px;}
+            .nav-links .btn { font-size: 13px; padding: 10px 15px; }
+            .hero { padding-top: 220px; } /* Mobilde header daha kalın olduğu için boşluk artırıldı */
+            .hero h1 { font-size: 42px; }
             .info-container { grid-template-columns: 1fr; gap: 40px;}
             .info-image { height: 350px; }
             .stats-grid { gap: 50px; }
@@ -279,7 +282,7 @@
     <div class="bg-shape-3"></div>
 
     <header>
-        <a href="anasayfa.html" class="logo"><span>⚡</span> KatalizApp</a>
+        <a href="index.html" class="logo"><span>⚡</span> KatalizApp</a>
         <div class="nav-links">
             <a href="veli-login.html" class="btn btn-outline">👨‍👩‍👧‍👦 Veli Girişi</a>
             <a href="login.html" class="btn btn-primary">🎓 Öğrenci Girişi</a>
