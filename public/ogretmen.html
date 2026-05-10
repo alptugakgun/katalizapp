@@ -869,7 +869,7 @@
         });
 
         socket.on('ogretmene_sure_guncelle', (veri) => { 
-            let timerEl = document.getElementById("timer-card-" + veri.ogrenciAd.replace(/\s+/g, '-')); 
+            let timerEl = document.getElementById("timer-card-card-" + veri.ogrenciAd.replace(/\s+/g, '-')); 
             if(timerEl) timerEl.innerText = veri.sure; 
         });
 
