@@ -257,7 +257,6 @@ function updateBossUI() {
     }
 }
 
-// Hasar artık yerel hesaplanmıyor, direkt sunucuya sinyal fırlatıyoruz!
 function damageBoss(amount) {
     if (currentBossHp <= 0 || ejderhaOluMu) return; 
     socket.emit('boss_hasar_ver', { kocKodu: kocKodu, hasar: amount, ogrenciAd: aktifOgrenci });
@@ -811,6 +810,12 @@ window.goreviBitir = function(id) {
     socket.emit('gorev_tamamlandi', { ogrenciAd: aktifOgrenci, gorevId: id, durum: true, kocKodu: kocKodu }); 
 };
 
+// 🚀 ZİNCİR GÖREV ADIMINI BİTİRME
+window.zincirAdimBitir = function(id, index) {
+    sesCal();
+    socket.emit('zincir_adim_tamamla', { ogrenciAd: aktifOgrenci, gorevId: id, adimIndex: index, kocKodu: kocKodu });
+};
+
 window.kaynakBitir = function(id, baslik) {
     if(confirm(`"${baslik}" kaynağını gerçekten bitirdin mi? Koçuna bildirim gidecek!`)) {
         sesCal();
@@ -896,7 +901,6 @@ window.botMesajGonder = function() {
 // 5. SOCKET.IO DİNLEYİCİLERİ
 // ==========================================
 
-// 🐉 YENİ: SUNUCUDAN GELEN BOSS CANI GÜNCELLEMESİ
 socket.on('boss_guncellendi', (veri) => {
     currentBossHp = veri.hp;
     updateBossUI();
@@ -1071,9 +1075,49 @@ socket.on('gorev_guncellendi', (tumVeriler) => {
             if(taskList) { 
                 taskList.innerHTML = ''; 
                 benimVerim.gorevler.forEach(gorev => { 
-                    let textStil = gorev.tamamlandi ? "text-decoration: line-through; color: var(--text-secondary);" : "color: var(--text-primary); font-weight: 800;"; 
-                    let sagKisim = gorev.tamamlandi ? `<span style="color: #10b981; font-weight: 800;">✅ Bitti</span>` : `<button class="finish-btn" onclick="goreviBitir(${gorev.id})">Bitir (+10 XP)</button>`; 
-                    taskList.innerHTML += `<div class="task-item"><span style="${textStil}">${gorev.metin}</span>${sagKisim}</div>`; 
+                    
+                    // 🔗 ZİNCİR GÖREV EKRANA BASMA (YENİ)
+                    if (gorev.isZincir) {
+                        let zincirHTML = `<div style="background: rgba(59, 130, 246, 0.05); border: 2px dashed #3b82f6; border-radius: 15px; padding: 15px; margin-bottom: 12px;">`;
+                        zincirHTML += `<div style="font-weight: 900; color: #3b82f6; margin-bottom: 10px; font-size: 14px;">🔗 ZİNCİR GÖREV HATTI</div>`;
+
+                        let unlockNext = true; 
+                        gorev.altAdimlar.forEach((adim, index) => {
+                            let isCompleted = adim.tamamlandi;
+                            let isLocked = !unlockNext && !isCompleted;
+
+                            let icon = isCompleted ? "✅" : (isLocked ? "🔒" : "🟢");
+                            let textStyle = isCompleted ? "text-decoration: line-through; color: var(--text-secondary);" : (isLocked ? "color: var(--text-secondary); opacity: 0.5;" : "color: var(--text-primary); font-weight: 800;");
+                            let btnHTML = '';
+
+                            if (!isCompleted && !isLocked) {
+                                btnHTML = `<button style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;" onclick="zincirAdimBitir(${gorev.id}, ${index})">Geç</button>`;
+                                unlockNext = false; 
+                            } else if (isCompleted) {
+                                unlockNext = true; 
+                            } else {
+                                unlockNext = false;
+                            }
+
+                            zincirHTML += `
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px; background: var(--bg-container); border-radius: 10px; border: 1px solid var(--border-light);">
+                                <span style="${textStyle}; font-size: 13px; flex: 1;">${icon} ${adim.metin}</span>
+                                ${btnHTML}
+                            </div>`;
+                        });
+
+                        if (gorev.tamamlandi) {
+                            zincirHTML += `<div style="text-align:center; color: #10b981; font-weight: 900; margin-top: 10px; font-size: 12px;">🎉 Zincir Tamamlandı! (+25 XP)</div>`;
+                        }
+                        zincirHTML += `</div>`;
+                        taskList.innerHTML += zincirHTML;
+                    } 
+                    // NORMAL GÖREV EKRANA BASMA
+                    else {
+                        let textStil = gorev.tamamlandi ? "text-decoration: line-through; color: var(--text-secondary);" : "color: var(--text-primary); font-weight: 800;"; 
+                        let sagKisim = gorev.tamamlandi ? `<span style="color: #10b981; font-weight: 800;">✅ Bitti</span>` : `<button class="finish-btn" onclick="goreviBitir(${gorev.id})">Bitir (+10 XP)</button>`; 
+                        taskList.innerHTML += `<div class="task-item"><span style="${textStil}">${gorev.metin}</span>${sagKisim}</div>`; 
+                    }
                 }); 
             } 
         } else {

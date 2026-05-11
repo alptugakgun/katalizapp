@@ -597,11 +597,28 @@ io.on('connection', (socket) => {
         } catch(e) {}
     });
 
+   // MEVCUT "yeni_gorev_ekle" FONKSİYONUNU BUL VE BUNUNLA DEĞİŞTİR:
     socket.on('yeni_gorev_ekle', async (veri) => { 
         try { 
             let ogrenci = await Ogrenci.findOne({ ogrenciAd: veri.ogrenciAd, kocKodu: veri.kocKodu }); 
             if (ogrenci) { 
-                ogrenci.gorevler.push({ id: Date.now(), metin: veri.gorevMetni, tamamlandi: false }); 
+                let metin = veri.gorevMetni;
+                let isZincir = metin.includes('>');
+                let altAdimlar = [];
+                
+                // Eğer içinde ">" varsa, bu bir zincir görevdir. Parçalara ayır!
+                if(isZincir) {
+                    altAdimlar = metin.split('>').map(m => ({ metin: m.trim(), tamamlandi: false }));
+                }
+
+                ogrenci.gorevler.push({ 
+                    id: Date.now(), 
+                    metin: isZincir ? altAdimlar[0].metin : metin, // Zincirse ilk adımı ana başlık yap
+                    orijinalMetin: metin,
+                    tamamlandi: false,
+                    isZincir: isZincir,
+                    altAdimlar: altAdimlar
+                }); 
                 
                 // 🗄️ VERİTABANI DİYETİ: Max 50 Görev
                 if(ogrenci.gorevler.length > 50) {
@@ -615,6 +632,50 @@ io.on('connection', (socket) => {
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list); 
             } 
         } catch(e) {} 
+    });
+
+    // HEMEN ALTINA BU YENİ ZİNCİR KIRICI FONKSİYONU EKLE:
+    socket.on('zincir_adim_tamamla', async (veri) => {
+        try {
+            let ogrenci = await Ogrenci.findOne({ ogrenciAd: veri.ogrenciAd, kocKodu: veri.kocKodu });
+            if (ogrenci && ogrenci.gorevler) {
+                let gIndex = ogrenci.gorevler.findIndex(g => Number(g.id) === Number(veri.gorevId));
+                if (gIndex !== -1 && ogrenci.gorevler[gIndex].isZincir) {
+                    
+                    // Sadece o adımı tamamlandı işaretle
+                    ogrenci.gorevler[gIndex].altAdimlar[veri.adimIndex].tamamlandi = true;
+
+                    // Bütün zincir bitti mi diye kontrol et
+                    let hepsiBittiMi = ogrenci.gorevler[gIndex].altAdimlar.every(a => a.tamamlandi);
+
+                    if (hepsiBittiMi && !ogrenci.gorevler[gIndex].tamamlandi) {
+                        ogrenci.gorevler[gIndex].tamamlandi = true;
+                        ogrenci.xp = Number(ogrenci.xp || 0) + 25; // 🚀 ZİNCİRİ BİTİRME BONUSU: +25 XP!
+
+                        // Düello kontrolü (Normal görev bitirme ile aynı)
+                        if (ogrenci.aktifDuello && ogrenci.aktifDuello.rakip) {
+                            let rakipOgrenci = await Ogrenci.findOne({ ogrenciAd: ogrenci.aktifDuello.rakip, kocKodu: veri.kocKodu });
+                            if (rakipOgrenci) {
+                                let kazanilanXP = ogrenci.aktifDuello.miktar;
+                                ogrenci.xp += kazanilanXP;
+                                rakipOgrenci.xp -= kazanilanXP;
+                                if (rakipOgrenci.xp < 0) { rakipOgrenci.xp = 0; }
+                                rakipOgrenci.aktifDuello = null;
+                                await rakipOgrenci.save();
+                                io.to(veri.kocKodu).emit('duello_sonucu', { kazanan: ogrenci.ogrenciAd, kaybeden: rakipOgrenci.ogrenciAd, miktar: kazanilanXP });
+                            }
+                            ogrenci.aktifDuello = null;
+                        }
+                    }
+
+                    ogrenci.markModified('gorevler');
+                    await ogrenci.save();
+
+                    let list = await Ogrenci.find({ kocKodu: veri.kocKodu });
+                    io.to(veri.kocKodu).emit('gorev_guncellendi', list);
+                }
+            }
+        } catch(e) {}
     });
 
     socket.on('gorev_tamamlandi', async (veri) => { 
