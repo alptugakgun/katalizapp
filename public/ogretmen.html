@@ -167,10 +167,6 @@
         .student-card.afk { border-top-color: #ef4444; }
         .student-card.afk:hover { box-shadow: 0 25px 50px rgba(0,0,0,0.6), 0 0 20px rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3);}
 
-        /* 🚨 Hile Yapan Kart Efekti */
-        .student-card.hile { border-color: #ef4444 !important; animation: hilePulse 1s infinite; }
-        @keyframes hilePulse { 0% { box-shadow: 0 0 10px rgba(239,68,68,0.5); } 50% { box-shadow: 0 0 40px rgba(239,68,68,1); } 100% { box-shadow: 0 0 10px rgba(239,68,68,0.5); } }
-
         .task-input-row { display: flex; gap: 10px; margin-top: 20px; }
         .task-input-row input { 
             flex: 1; padding: 12px 15px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); border-radius: 15px; outline: none; font-family: inherit; font-weight: 800; color: var(--text-light); transition: 0.3s;
@@ -828,20 +824,6 @@
 
         socket.on('yeni_kaynak_eklendi', (kaynak) => { socket.emit('join_room', kocKodu); });
 
-        // 🚨 YENİ: ÖĞRENCİ SEKME DEĞİŞTİRDİĞİNDE ÖTECEK ALARM
-        socket.on('hile_tespiti', (veri) => {
-            sistemBildirimi("🚨 ODAK KAYBI UYARISI!", `${veri.ogrenciAd} adlı öğrenci başka bir sekmeye geçti!`);
-            
-            // Öğrencinin canlı kartını bul ve kırmızı ışıkta yakıp söndür
-            let id = "card-" + veri.ogrenciAd.replace(/\s+/g, '-'); 
-            let card = document.getElementById(id);
-            if(card) {
-                card.classList.add('hile');
-                // 6 saniye sonra kırmızı alarmı kapat
-                setTimeout(() => { card.classList.remove('hile'); }, 6000);
-            }
-        });
-
         socket.on('finans_uyarisi', (veri) => {
             const box = document.getElementById('financeAlertBox');
             const list = document.getElementById('financeAlertList');
@@ -1318,11 +1300,7 @@
             let gosterilecekDers = afkMi ? `<span style="color:#ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5);">🚨 MASA BAŞINDAN AYRILDI!</span>` : (gelenVeri.ders || 'Ders Seçimi Bekleniyor') + ' ➔ <span style="color:var(--text-light);">' + (gelenVeri.mesaj || 'Sistemde Aktif') + '</span>';
 
             if (mevcut) {
-                // Eğer halihazırda 'hile' class'ı varsa onu ezmemek için mevcut classlist'i koruyalım
-                let isHile = mevcut.classList.contains('hile');
                 mevcut.className = kartSinif;
-                if(isHile) mevcut.classList.add('hile');
-                
                 mevcut.querySelector('.student-name').innerHTML = `
                     <span style="font-size:32px;">${gelenVeri.avatar || '👤'}</span> 
                     ${gelenVeri.ogrenciAd} 

@@ -281,7 +281,25 @@ app.post('/api/sifreler', async (req, res) => {
 });
 
 // ==========================================
-// 3. SOCKET.IO (CANLI VERİ AKIŞI)
+// 3. SUNUCU HAFIZASI (ROOM DATA)
+// ==========================================
+// Sınıflara (Koç Kodlarına) özel Ejderha Canı ve Tahta Çizim Hafızası
+const roomData = {};
+
+function getRoomData(kocKodu) {
+    if(!roomData[kocKodu]) {
+        roomData[kocKodu] = { 
+            bossHp: 10000, 
+            tahtaGecmisi: [], 
+            tahtaAcik: false 
+        };
+    }
+    return roomData[kocKodu];
+}
+
+
+// ==========================================
+// 4. SOCKET.IO (CANLI VERİ AKIŞI)
 // ==========================================
 
 io.on('connection', (socket) => {
@@ -320,9 +338,54 @@ io.on('connection', (socket) => {
             
             const eskiKaynaklar = await Kaynak.find({ kocKodu }).sort({id: -1}); 
             socket.emit('kaynaklari_yukle', eskiKaynaklar); 
+
+            // 🔥 Yeni: Odaya katılana güncel Boss Canını ve Tahta durumunu gönder
+            let rData = getRoomData(kocKodu);
+            socket.emit('boss_guncellendi', { hp: rData.bossHp, sonVuran: "" });
+
+            if (rData.tahtaAcik) {
+                socket.emit('canli_tahta_durumu', { kocKodu: kocKodu, acik: true });
+                // Geç kalan öğrenciye geçmiş çizimleri döküyoruz
+                rData.tahtaGecmisi.forEach(cizim => {
+                    socket.emit('canli_cizim_geldi', cizim);
+                });
+            }
+
         } catch (hata) {
             console.error("Join Room Hatası:", hata);
         } 
+    });
+
+    // 🐉 YENİ: EJDERHA HASAR SİNYALİ
+    socket.on('boss_hasar_ver', (veri) => {
+        let rData = getRoomData(veri.kocKodu);
+        if (rData.bossHp > 0) {
+            rData.bossHp -= veri.hasar;
+            if(rData.bossHp < 0) rData.bossHp = 0;
+            
+            // Tüm sınıfa ejderhanın yeni canını fırlat
+            io.to(veri.kocKodu).emit('boss_guncellendi', { hp: rData.bossHp, sonVuran: veri.ogrenciAd });
+        }
+    });
+
+    // 🎨 YENİ: AKILLI TAHTA HAFIZASI
+    socket.on('tahta_aktiflesiyor', (veri) => {
+        let rData = getRoomData(veri.kocKodu);
+        rData.tahtaAcik = veri.acik;
+        if(!veri.acik) rData.tahtaGecmisi = []; // Tahta kapanırsa hafızayı temizle
+        socket.to(veri.kocKodu).emit('canli_tahta_durumu', veri);
+    });
+
+    socket.on('tahta_cizim_yap', (veri) => {
+        let rData = getRoomData(veri.kocKodu);
+        if (veri.temizle) {
+            rData.tahtaGecmisi = [];
+        } else {
+            rData.tahtaGecmisi.push(veri);
+            // RAM şişmesin diye max 2000 çizgi tutuyoruz
+            if(rData.tahtaGecmisi.length > 2000) rData.tahtaGecmisi.shift(); 
+        }
+        socket.to(veri.kocKodu).emit('canli_cizim_geldi', veri);
     });
     
     socket.on('ajanda_kaydet', async (veri) => { 
@@ -453,6 +516,12 @@ io.on('connection', (socket) => {
             if (ogrenci) { 
                 let yeniSoru = { id: Date.now(), resim: veri.resim, dersKonu: veri.dersKonu, durum: 'Bekliyor', tarih: new Date().toLocaleDateString('tr-TR') }; 
                 ogrenci.hataDefteri.push(yeniSoru); 
+                
+                // 🗄️ VERİTABANI DİYETİ: Max 40 soru tut
+                if(ogrenci.hataDefteri.length > 40) {
+                    ogrenci.hataDefteri.shift();
+                }
+
                 ogrenci.markModified('hataDefteri'); 
                 await ogrenci.save(); 
                 
@@ -533,6 +602,12 @@ io.on('connection', (socket) => {
             let ogrenci = await Ogrenci.findOne({ ogrenciAd: veri.ogrenciAd, kocKodu: veri.kocKodu }); 
             if (ogrenci) { 
                 ogrenci.gorevler.push({ id: Date.now(), metin: veri.gorevMetni, tamamlandi: false }); 
+                
+                // 🗄️ VERİTABANI DİYETİ: Max 50 Görev
+                if(ogrenci.gorevler.length > 50) {
+                    ogrenci.gorevler.shift();
+                }
+
                 ogrenci.markModified('gorevler'); 
                 await ogrenci.save(); 
                 
@@ -754,25 +829,6 @@ io.on('connection', (socket) => {
 
     socket.on('sure_guncelle', (veri) => { 
         io.to(veri.kocKodu).emit('ogretmene_sure_guncelle', veri); 
-    });
-
-    // ==========================================
-    // 🎨 AKILLI TAHTA (CANLI YAYIN) İŞLEMLERİ
-    // ==========================================
-
-    socket.on('tahta_aktiflesiyor', (veri) => {
-        socket.to(veri.kocKodu).emit('canli_tahta_durumu', veri);
-    });
-
-    socket.on('tahta_cizim_yap', (veri) => {
-        socket.to(veri.kocKodu).emit('canli_cizim_geldi', veri);
-    });
-
-    // ==========================================
-    // 🚨 HİLE (SEKME DEĞİŞTİRME) SİNYALİ
-    // ==========================================
-    socket.on('sekme_degistirdi_hilesi', (veri) => {
-        io.to(veri.kocKodu).emit('hile_tespiti', veri);
     });
 
     // --- 🤖 GERÇEK GEMINI YAPAY ZEKA ASİSTAN ENTEGRASYONU ---

@@ -26,27 +26,25 @@
         
         /* 🛡️ EVRENSEL ZIRH VE MOBİL OPTİMİZASYONU */
         *, *::before, *::after {
-            box-sizing: border-box; /* En kritik kod: Kutuların boyutunu içe doğru hesaplar, ekran taşmalarını %99 önler */
-            -webkit-tap-highlight-color: transparent; /* Mobilde butona tıklayınca çıkan o çirkin mavi parlamayı yok eder */
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
         }
         
         html {
-            -webkit-text-size-adjust: 100%; /* Telefon yan çevrilince veya farklı ekranda yazıların devasa büyümesini engeller */
-            scroll-behavior: smooth; /* Sayfa içi kaydırmaları yağ gibi yumuşatır */
+            -webkit-text-size-adjust: 100%; 
+            scroll-behavior: smooth; 
         }
         
         img, video, canvas {
-            max-width: 100%; /* Resimlerin ve grafiklerin ekrandan taşmasını kesin olarak engeller */
+            max-width: 100%; 
             height: auto;
         }
 
-        /* Mobilde formlara (input) tıklanınca ekranın anlamsızca zoom yapmasını engeller (Özellikle iOS cihazlarda çok olur) */
         input, select, textarea, button {
             font-size: 16px !important; 
             font-family: inherit;
         }
         
-        /* Çentikli ekranlar (iPhone vb.) ve alt ev çizgisi için güvenli alan boşlukları */
         .app-wrapper {
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
@@ -162,7 +160,7 @@
         .content-area {
             flex: 1;
             padding: 25px;
-            padding-bottom: 100px; /* Nav bar boşluğu */
+            padding-bottom: 100px;
             overflow-y: auto;
         }
 
@@ -316,16 +314,15 @@
         }
         @keyframes pulseYayin { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* 🏆 YENİ: KUPA ODASI (ROZETLER) TASARIMI */
+        /* 🏆 KUPA ODASI (ROZETLER) TASARIMI */
         .rozet-vitrini {
             display: flex;
             gap: 15px;
             overflow-x: auto;
             padding: 10px 0;
             margin-bottom: 20px;
-            /* Scrollbar gizleme */
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
         .rozet-vitrini::-webkit-scrollbar { display: none; }
         
@@ -341,7 +338,7 @@
             align-items: center;
             gap: 8px;
             transition: 0.3s;
-            opacity: 0.4; /* Kazanılmayanlar soluk */
+            opacity: 0.4;
             filter: grayscale(100%);
         }
         .rozet-kart.kazanildi {
@@ -788,35 +785,6 @@
                 document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0f172a');
             }
         }
-
-        // --- 🚨 YENİ: SEKME DEĞİŞTİRME DEDEKTÖRÜ (HİLE KORUMASI) ---
-        // Öğrenci odak modundayken başka sekmeye veya uygulamaya geçerse yakalar
-        document.addEventListener("visibilitychange", () => {
-            let running = localStorage.getItem(`${localStorage.getItem('ogrenciKimligi')}_running`) === 'true';
-            
-            // Sadece sayaç çalışıyorken ve sayfa gizlendiğinde devreye gir
-            if (document.hidden && running) {
-                // Sayacı acımasızca durdur (app.js içindeki fonksiyonu tetikle)
-                if (typeof window.pauseTimer === "function") {
-                    window.pauseTimer(false); 
-                    
-                    let statusEl = document.getElementById('statusText');
-                    if(statusEl) {
-                        statusEl.innerHTML = "🚨 ODAK KAYBI! Başka bir sekmeye geçtiğin tespit edildi.";
-                        statusEl.style.backgroundColor = "#fee2e2";
-                        statusEl.style.color = "#dc2626";
-                    }
-                    
-                    // Öğretmenin paneline o "Ötecek Kırmızı Alarmı" gönder
-                    if (typeof socket !== 'undefined') {
-                        socket.emit('sekme_degistirdi_hilesi', { 
-                            ogrenciAd: localStorage.getItem('ogrenciKimligi'), 
-                            kocKodu: localStorage.getItem('kocKodu') 
-                        });
-                    }
-                }
-            }
-        });
 
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('katalizTema') === 'dark') {

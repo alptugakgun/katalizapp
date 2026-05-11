@@ -59,7 +59,7 @@ function seriKontrol() {
     }
 }
 
-// 🏆 YENİ: KUPA ODASI / ROZET KONTROL MOTORU
+// 🏆 KUPA ODASI / ROZET KONTROL MOTORU
 function rozetleriKontrolEt() {
     let kazanilan = 0;
     let bugun = new Date().toLocaleDateString('tr-TR');
@@ -69,21 +69,18 @@ function rozetleriKontrolEt() {
     let rozet3 = document.getElementById('rozet_3');
     let rozet4 = document.getElementById('rozet_4');
 
-    // 1. İstikrar Abidesi (7 Gün Seri)
     let seri = parseInt(localStorage.getItem(`${aktifOgrenci}_seriGunu`)) || 0;
     if (seri >= 7 && rozet1) {
         rozet1.classList.add('kazanildi');
         kazanilan++;
     }
 
-    // 2. Pomo Canavarı (Bugün 5 Pomodoro)
     let bugunPomo = benimAktiviteGecmisim.filter(a => a.tarih === bugun && a.tip === 'Pomodoro').length;
     if (bugunPomo >= 5 && rozet2) {
         rozet2.classList.add('kazanildi');
         kazanilan++;
     }
 
-    // 3. Gece Kuşu (00:00 - 05:59 arası çalışma)
     let geceCalistiMi = benimAktiviteGecmisim.some(a => {
         let saatStr = a.saat.split(':')[0];
         let saat = parseInt(saatStr);
@@ -94,7 +91,6 @@ function rozetleriKontrolEt() {
         kazanilan++;
     }
 
-    // 4. Ejderha Avcısı (Boss Kesildi mi?)
     if (localStorage.getItem(`${aktifOgrenci}_ejderhaAvcisi`) === 'true' && rozet4) {
         rozet4.classList.add('kazanildi');
         kazanilan++;
@@ -238,6 +234,51 @@ let bekleyenDuelloRakip = '';
 
 let yoklamaTimer;
 let yoklamaGeriSayimInterval;
+
+// 🔥 YENİ: EJDERHA (BOSS) SUNUCU SENKRONİZASYONU 🔥
+let currentBossHp = 10000; 
+const maxBossHp = 10000;
+let ejderhaOluMu = false;
+
+function updateBossUI() {
+    const hpFill = document.getElementById('bossHpFill');
+    const hpText = document.getElementById('bossHpText');
+    
+    if (!hpFill || !hpText) return;
+
+    let percentage = (currentBossHp / maxBossHp) * 100;
+    hpFill.style.width = percentage + "%";
+    hpText.innerText = `${currentBossHp.toLocaleString()} / ${maxBossHp.toLocaleString()} HP`;
+
+    if (percentage < 20) {
+        hpFill.style.background = "linear-gradient(90deg, #7f1d1d, #ef4444)";
+    } else {
+        hpFill.style.background = "linear-gradient(90deg, #ef4444, #f97316)";
+    }
+}
+
+// Hasar artık yerel hesaplanmıyor, direkt sunucuya sinyal fırlatıyoruz!
+function damageBoss(amount) {
+    if (currentBossHp <= 0 || ejderhaOluMu) return; 
+    socket.emit('boss_hasar_ver', { kocKodu: kocKodu, hasar: amount, ogrenciAd: aktifOgrenci });
+}
+
+function ejderhaGanimetiEkle() {
+    const marketModal = document.querySelector('#marketModal .modal-content');
+    if(!document.getElementById('ejderhaGanimeti')) {
+        const ganimetHTML = `
+        <div id="ejderhaGanimeti" class="market-item" style="background: linear-gradient(135deg, #f59e0b, #ef4444); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 900; color: white; border: 2px solid #fbbf24; box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4); animation: pulse 2s infinite;">
+            <span>🐉 Ejderha Tılsımı (Özel Görev Geçişi)</span>
+            <button style="background: white; color: #ef4444; border: none; padding: 8px 12px; border-radius: 10px; font-weight: 900;" onclick="odulAl('Ejderha Tılsımı', 3000)">3000 XP</button>
+        </div>`;
+        const closeBtn = marketModal.querySelector('.close-modal-btn');
+        closeBtn.insertAdjacentHTML('beforebegin', ganimetHTML);
+    }
+}
+
+function pomodoroTamamlandiMekanikleri() {
+    damageBoss(25);
+}
 
 function getDers() { 
     return `[${sinavSecimi.value}] ${dersSecimiUI.value} - ${konuSecimi.value}`; 
@@ -758,7 +799,6 @@ window.odulAl = function(odulIsmi, bedel) {
         socket.emit('odul_satin_al', { ogrenciAd: aktifOgrenci, odul: odulIsmi, bedel: bedel, kocKodu: kocKodu }); 
         document.getElementById('marketModal').style.display = 'none'; 
         
-        // 🔥 Ejderha Avcısı Rozeti Kontrolü
         if(odulIsmi.includes('Ejderha')) {
             localStorage.setItem(`${aktifOgrenci}_ejderhaAvcisi`, 'true');
             rozetleriKontrolEt();
@@ -856,6 +896,21 @@ window.botMesajGonder = function() {
 // 5. SOCKET.IO DİNLEYİCİLERİ
 // ==========================================
 
+// 🐉 YENİ: SUNUCUDAN GELEN BOSS CANI GÜNCELLEMESİ
+socket.on('boss_guncellendi', (veri) => {
+    currentBossHp = veri.hp;
+    updateBossUI();
+
+    if (currentBossHp <= 0 && !ejderhaOluMu) {
+        ejderhaOluMu = true;
+        sistemBildirimi("🐉 Ejderha Devrildi!", `${veri.sonVuran} son darbeyi indirdi!`);
+        alert(`🏆 TEBRİKLER! ${veri.sonVuran} son darbeyi indirdi ve Ejderha devrildi! Marketten ganimetini alabilirsin.`);
+        localStorage.setItem(`${aktifOgrenci}_ejderhaAvcisi`, 'true');
+        ejderhaGanimetiEkle();
+        rozetleriKontrolEt();
+    }
+});
+
 socket.on('gorev_guncellendi', (tumVeriler) => {
     let duelloDiv = document.getElementById('duelloSinifListesi'); 
     if(duelloDiv){ 
@@ -877,7 +932,6 @@ socket.on('gorev_guncellendi', (tumVeriler) => {
         benimTamamlananKaynaklar = benimVerim.tamamlananKaynaklar || [];
         benimAktiviteGecmisim = benimVerim.aktiviteGecmisi || [];
 
-        // 🔥 YENİ: ROZET MOTORUNU ÇALIŞTIR
         rozetleriKontrolEt();
 
         if (benimVerim.sonrakiDers && benimVerim.sonrakiDers.trim() !== '') {
@@ -910,7 +964,6 @@ socket.on('gorev_guncellendi', (tumVeriler) => {
             }
         }
 
-        // 🔥 HATA DEFTERİ (ARALIKLI TEKRAR) DÜZENLEMESİ 🔥
         if (benimVerim.hataDefteri) {
             let hataKutu = document.getElementById('hataListem');
             if(hataKutu) {
@@ -1027,7 +1080,6 @@ socket.on('gorev_guncellendi', (tumVeriler) => {
             if(tb) tb.style.display = 'none';
         }
 
-        // ÇALIŞMA PROGRAMI RENDER İŞLEMİ
         let planList = document.getElementById('calismaPlaniListesi');
         if (planList) {
             planList.innerHTML = '';
@@ -1058,7 +1110,6 @@ socket.on('eski_verileri_yukle', (tumVeriler) => {
     if(benimVerim) {
         benimTamamlananKaynaklar = benimVerim.tamamlananKaynaklar || [];
         benimAktiviteGecmisim = benimVerim.aktiviteGecmisi || [];
-        // ROZET MOTORU BAŞLAT
         rozetleriKontrolEt();
     }
 });
