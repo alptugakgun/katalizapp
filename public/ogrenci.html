@@ -532,21 +532,125 @@
         </div>
     </div>
 
-    <div class="modal" id="rehberlikModal"><div class="modal-content"><h2 style="color:#0d9488;">🧠 Test Merkezi</h2><select id="testSecici" class="select-box" style="width: 100%; margin-bottom: 20px;" onchange="testiYukle()"><option value="">Test Seç...</option><option value="Sınav Kaygısı Envanteri">Sınav Kaygısı Envanteri</option><option value="Motivasyon ve Odaklanma Testi">Motivasyon ve Odaklanma Testi</option><option value="Öğrenme Stili Belirleme">Öğrenme Stili Belirleme</option></select><div id="dinamikSoruAlani" style="text-align: left; max-height: 300px; overflow-y: auto; display:none;"></div><button id="testGonderBtn" onclick="psikolojikTestKaydet()" class="action-btn" style="background:#0d9488; width:100%; display:none; margin-top:20px;">Gönder</button><button class="close-modal-btn" onclick="document.getElementById('rehberlikModal').style.display='none'">Kapat</button></div></div>
+    <div class="modal" id="rehberlikModal">
+        <div class="modal-content">
+            <h2 style="color:#0d9488;">🧠 Test Merkezi</h2>
+            <select id="testSecici" class="select-box" style="width: 100%; margin-bottom: 20px;" onchange="testiYukle()">
+                <option value="">Test Seç...</option>
+                <option value="Sınav Kaygısı Envanteri">Sınav Kaygısı Envanteri</option>
+                <option value="Motivasyon ve Odaklanma Testi">Motivasyon ve Odaklanma Testi</option>
+                <option value="Öğrenme Stili Belirleme">Öğrenme Stili Belirleme</option>
+            </select>
+            <div id="dinamikSoruAlani" style="text-align: left; max-height: 300px; overflow-y: auto; display:none;"></div>
+            <button id="testGonderBtn" onclick="psikolojikTestKaydet()" class="action-btn" style="background:#0d9488; width:100%; display:none; margin-top:20px;">Gönder</button>
+            <button class="close-modal-btn" onclick="document.getElementById('rehberlikModal').style.display='none'">Kapat</button>
+        </div>
+    </div>
     
-    <div class="modal" id="netModal"><div class="modal-content"><h2 style="color:#3b82f6;">📈 Optik Analiz</h2><select id="sinavTuru" class="select-box" style="margin-bottom:15px; width:100%; box-sizing:border-box;"><option value="TYT Denemesi">TYT Denemesi</option><option value="AYT Denemesi">AYT Denemesi</option><option value="LGS Denemesi">LGS Denemesi</option></select><div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-input); padding:15px; border-radius:15px; margin-bottom:15px;"><span style="font-weight:900;">Detaylı Gir:</span><input type="checkbox" id="detayliOptikToggle" onchange="document.getElementById('detayliNetKutusu').style.display = this.checked ? 'block' : 'none'; document.getElementById('hizliNetKutusu').style.display = this.checked ? 'none' : 'block';" style="transform: scale(1.5);"></div><div id="hizliNetKutusu"><input type="number" id="netSkoru" placeholder="Toplam Net" step="0.25" class="select-box" style="width:100%; text-align:center; font-size:20px; box-sizing:border-box;"></div><div id="detayliNetKutusu" style="display:none; background:var(--bg-input); padding:15px; border-radius:15px;"><div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Türkçe:</span><input type="number" id="netTurkce" style="width:60px; text-align:center; font-weight:bold;"></div><div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Matematik:</span><input type="number" id="netMatematik" style="width:60px; text-align:center; font-weight:bold;"></div><div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Fen:</span><input type="number" id="netFen" style="width:60px; text-align:center; font-weight:bold;"></div><div style="display:flex; justify-content:space-between;"><span>Sosyal:</span><input type="number" id="netSosyal" style="width:60px; text-align:center; font-weight:bold;"></div></div><button onclick="netKaydet()" class="action-btn" style="background:#10b981; width:100%; margin-top:20px;">Gönder</button><button class="close-modal-btn" onclick="document.getElementById('netModal').style.display='none'">Kapat</button></div></div>
+    <div class="modal" id="netModal">
+        <div class="modal-content">
+            <h2 style="color:#3b82f6;">📈 Optik Analiz</h2>
+            <select id="sinavTuru" class="select-box" style="margin-bottom:15px; width:100%; box-sizing:border-box;">
+                <option value="TYT Denemesi">TYT Denemesi</option>
+                <option value="AYT Denemesi">AYT Denemesi</option>
+                <option value="LGS Denemesi">LGS Denemesi</option>
+            </select>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-input); padding:15px; border-radius:15px; margin-bottom:15px;">
+                <span style="font-weight:900;">Detaylı Gir:</span>
+                <input type="checkbox" id="detayliOptikToggle" onchange="document.getElementById('detayliNetKutusu').style.display = this.checked ? 'block' : 'none'; document.getElementById('hizliNetKutusu').style.display = this.checked ? 'none' : 'block';" style="transform: scale(1.5);">
+            </div>
+            <div id="hizliNetKutusu">
+                <input type="number" id="netSkoru" placeholder="Toplam Net" step="0.25" class="select-box" style="width:100%; text-align:center; font-size:20px; box-sizing:border-box;">
+            </div>
+            <div id="detayliNetKutusu" style="display:none; background:var(--bg-input); padding:15px; border-radius:15px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span>Türkçe:</span>
+                    <input type="number" id="netTurkce" style="width:60px; text-align:center; font-weight:bold;">
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span>Matematik:</span>
+                    <input type="number" id="netMatematik" style="width:60px; text-align:center; font-weight:bold;">
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span>Fen:</span>
+                    <input type="number" id="netFen" style="width:60px; text-align:center; font-weight:bold;">
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span>Sosyal:</span>
+                    <input type="number" id="netSosyal" style="width:60px; text-align:center; font-weight:bold;">
+                </div>
+            </div>
+            <button onclick="netKaydet()" class="action-btn" style="background:#10b981; width:100%; margin-top:20px;">Gönder</button>
+            <button class="close-modal-btn" onclick="document.getElementById('netModal').style.display='none'">Kapat</button>
+        </div>
+    </div>
     
-    <div class="modal" id="hataModal"><div class="modal-content"><h2 style="color:var(--text-primary);">💣 Hata Defteri</h2><input type="file" id="hataResimInput" accept="image/*" style="display: none;" onchange="hataResmiSec(this)"><button onclick="document.getElementById('hataResimInput').click()" class="action-btn" style="background:#10b981; width:100%; margin-bottom: 20px;">📸 Soru Yükle</button><div id="hataListem" style="text-align: left; max-height: 250px; overflow-y: auto; background: var(--bg-input); padding: 15px; border-radius: 20px;"></div><button class="close-modal-btn" onclick="document.getElementById('hataModal').style.display='none'">Kapat</button></div></div>
+    <div class="modal" id="hataModal">
+        <div class="modal-content">
+            <h2 style="color:var(--text-primary);">💣 Hata Defteri</h2>
+            <input type="file" id="hataResimInput" accept="image/*" style="display: none;" onchange="hataResmiSec(this)">
+            <button onclick="document.getElementById('hataResimInput').click()" class="action-btn" style="background:#10b981; width:100%; margin-bottom: 20px;">📸 Soru Yükle</button>
+            <div id="hataListem" style="text-align: left; max-height: 250px; overflow-y: auto; background: var(--bg-input); padding: 15px; border-radius: 20px;"></div>
+            <button class="close-modal-btn" onclick="document.getElementById('hataModal').style.display='none'">Kapat</button>
+        </div>
+    </div>
     
-    <div class="modal" id="duelloModal"><div class="modal-content"><h2 style="color:#ef4444;">⚔️ Düello</h2><div id="duelloSinifListesi" style="text-align: left; background: var(--bg-input); padding: 15px; border-radius: 20px; max-height: 250px; overflow-y:auto;"></div><button class="close-modal-btn" onclick="document.getElementById('duelloModal').style.display='none'">Kapat</button></div></div>
+    <div class="modal" id="duelloModal">
+        <div class="modal-content">
+            <h2 style="color:#ef4444;">⚔️ Düello</h2>
+            <div id="duelloSinifListesi" style="text-align: left; background: var(--bg-input); padding: 15px; border-radius: 20px; max-height: 250px; overflow-y:auto;"></div>
+            <button class="close-modal-btn" onclick="document.getElementById('duelloModal').style.display='none'">Kapat</button>
+        </div>
+    </div>
     
-    <div class="modal" id="kutuphaneModal"><div class="modal-content"><h2 style="color:#8b5cf6;">📚 Kütüphane</h2><div id="kaynakListesi" style="margin-bottom: 20px; max-height: 300px; overflow-y: auto;"></div><button class="close-modal-btn" onclick="document.getElementById('kutuphaneModal').style.display='none'">Kapat</button></div></div>
+    <div class="modal" id="kutuphaneModal">
+        <div class="modal-content">
+            <h2 style="color:#8b5cf6;">📚 Kütüphane</h2>
+            <div id="kaynakListesi" style="margin-bottom: 20px; max-height: 300px; overflow-y: auto;"></div>
+            <button class="close-modal-btn" onclick="document.getElementById('kutuphaneModal').style.display='none'">Kapat</button>
+        </div>
+    </div>
     
-    <div class="modal" id="marketModal"><div class="modal-content"><h2 style="color:#f59e0b;">🛒 Market</h2><p style="font-weight:900;">Bakiye: <span id="marketXpDisplay" style="color:#4f46e5;">0 XP</span></p><div class="market-item" style="background: var(--bg-input); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 900;"><span>15 Dk Mola</span><button style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 10px; font-weight: 900;" onclick="odulAl('15 Dk Ekstra Mola', 1000)">1000 XP</button></div><button class="close-modal-btn" onclick="document.getElementById('marketModal').style.display='none'">Kapat</button></div></div>
+    <div class="modal" id="marketModal">
+        <div class="modal-content">
+            <h2 style="color:#f59e0b;">🛒 Market</h2>
+            <p style="font-weight:900;">Bakiye: <span id="marketXpDisplay" style="color:#4f46e5;">0 XP</span></p>
+            <div class="market-item" style="background: var(--bg-input); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 900;">
+                <span>15 Dk Mola</span>
+                <button style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 10px; font-weight: 900;" onclick="odulAl('15 Dk Ekstra Mola', 1000)">1000 XP</button>
+            </div>
+            <button class="close-modal-btn" onclick="document.getElementById('marketModal').style.display='none'">Kapat</button>
+        </div>
+    </div>
     
-    <div class="modal" id="duelloIstekModal"><div class="modal-content" style="border: 4px solid #ef4444;"><div style="font-size: 50px;">⚔️</div><h2 style="color:#ef4444;">MEYDAN OKUMA!</h2><p id="duelloIstekMetni" style="font-weight:900; font-size:18px;">[İsim] sana meydan okuyor!</p><div style="display:flex; gap:10px; margin-top:20px;"><button onclick="duelloKabulEt()" style="flex:1; background:#10b981; color:white; border:none; padding:15px; border-radius:15px; font-weight:900;">Kabul</button><button onclick="document.getElementById('duelloIstekModal').style.display='none'" style="flex:1; background:#ef4444; color:white; border:none; padding:15px; border-radius:15px; font-weight:900;">Red</button></div></div></div>
+    <div class="modal" id="duelloIstekModal">
+        <div class="modal-content" style="border: 4px solid #ef4444;">
+            <div style="font-size: 50px;">⚔️</div>
+            <h2 style="color:#ef4444;">MEYDAN OKUMA!</h2>
+            <p id="duelloIstekMetni" style="font-weight:900; font-size:18px;">[İsim] sana meydan okuyor!</p>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button onclick="duelloKabulEt()" style="flex:1; background:#10b981; color:white; border:none; padding:15px; border-radius:15px; font-weight:900;">Kabul</button>
+                <button onclick="document.getElementById('duelloIstekModal').style.display='none'" style="flex:1; background:#ef4444; color:white; border:none; padding:15px; border-radius:15px; font-weight:900;">Red</button>
+            </div>
+        </div>
+    </div>
 
-    <div class="modal" id="avatarModal"><div class="modal-content"><h3>Karakter Seç</h3><div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom: 20px;"><div style="font-size:35px; background:var(--bg-input); padding:10px; border-radius:50%;" onclick="avatarSec('👤')">👤</div><div style="font-size:35px; background:var(--bg-input); padding:10px; border-radius:50%;" onclick="avatarSec('👨‍🎓')">👨‍🎓</div><div style="font-size:35px; background:var(--bg-input); padding:10px; border-radius:50%;" onclick="avatarSec('👩‍🎓')">👩‍🎓</div><div style="font-size:35px; background:var(--bg-input); padding:10px; border-radius:50%;" onclick="avatarSec('🥷')">🥷</div></div><div style="background: var(--bg-input); padding: 15px; border-radius: 15px; border: 2px dashed #fbbf24;"><p style="margin:0; font-size:12px; font-weight:900; color:#d97706;">Veli Takip Kodun:</p><h2 id="veliKoduGosterge" style="margin:5px 0 0 0; color:#b45309;">V-XXXX</h2></div><button class="close-modal-btn" onclick="document.getElementById('avatarModal').style.display='none'">Kapat</button></div></div>
+    <div class="modal" id="avatarModal">
+        <div class="modal-content">
+            <h3>Karakter Seç</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom: 20px;">
+                <div style="font-size:35px; background:var(--bg-input); padding:10px; border-radius:50%;" onclick="avatarSec('👤')">👤</div>
+                <div style="font-size:35px; background:var(--bg-input); padding:10px; border-radius:50%;" onclick="avatarSec('👨‍🎓')">👨‍🎓</div>
+                <div style="font-size:35px; background:var(--bg-input); padding:10px; border-radius:50%;" onclick="avatarSec('👩‍🎓')">👩‍🎓</div>
+                <div style="font-size:35px; background:var(--bg-input); padding:10px; border-radius:50%;" onclick="avatarSec('🥷')">🥷</div>
+            </div>
+            <div style="background: var(--bg-input); padding: 15px; border-radius: 15px; border: 2px dashed #fbbf24;">
+                <p style="margin:0; font-size:12px; font-weight:900; color:#d97706;">Veli Takip Kodun:</p>
+                <h2 id="veliKoduGosterge" style="margin:5px 0 0 0; color:#b45309;">V-XXXX</h2>
+            </div>
+            <button class="close-modal-btn" onclick="document.getElementById('avatarModal').style.display='none'">Kapat</button>
+        </div>
+    </div>
 
     <div class="modal" id="analizModal">
         <div class="modal-content" style="max-width: 450px;">
@@ -613,75 +717,24 @@
         </div>
     </div>
 
-
     <script src="/socket.io/socket.io.js"></script>
     <script src="/app.js?v=28"></script>
     <script>
         // --- 🧭 SEKME YÖNETİMİ (BOTTOM NAVIGATION) ---
-        function switchTab(tabId, el) {
+        window.switchTab = function(tabId, el) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
-            document.getElementById(tabId).classList.add('active');
+            let hedefSekme = document.getElementById(tabId);
+            if(hedefSekme) hedefSekme.classList.add('active');
+            
             el.classList.add('active');
-            window.scrollTo(0,0);
-        }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
 
-        // 🐲 BOSS MEKANİĞİ DEĞİŞKENLERİ
-        let currentBossHp = 8750; 
-        const maxBossHp = 10000;
-
-        function updateBossUI() {
-            const hpFill = document.getElementById('bossHpFill');
-            const hpText = document.getElementById('bossHpText');
-            
-            if (!hpFill || !hpText) return;
-
-            let percentage = (currentBossHp / maxBossHp) * 100;
-            hpFill.style.width = percentage + "%";
-            hpText.innerText = `${currentBossHp.toLocaleString()} / ${maxBossHp.toLocaleString()} HP`;
-
-            if (percentage < 20) {
-                hpFill.style.background = "linear-gradient(90deg, #7f1d1d, #ef4444)";
-            }
-        }
-
-        function damageBoss(amount) {
-            if (currentBossHp <= 0) return; 
-
-            currentBossHp -= amount;
-            if (currentBossHp < 0) currentBossHp = 0;
-            
-            updateBossUI();
-            
-            console.log(`💥 Ejderhaya ${amount} hasar verildi!`);
-            
-            if (currentBossHp === 0) {
-                alert("🏆 TEBRİKLER! Ejderha devrildi. Tüm sınıfa +500 XP!");
-                ejderhaGanimetiEkle(); 
-            }
-        }
-
-        function ejderhaGanimetiEkle() {
-            const marketModal = document.querySelector('#marketModal .modal-content');
-            if(!document.getElementById('ejderhaGanimeti')) {
-                const ganimetHTML = `
-                <div id="ejderhaGanimeti" class="market-item" style="background: linear-gradient(135deg, #f59e0b, #ef4444); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 900; color: white; border: 2px solid #fbbf24; box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4); animation: pulse 2s infinite;">
-                    <span>🐉 Ejderha Tılsımı (Özel Görev Geçişi)</span>
-                    <button style="background: white; color: #ef4444; border: none; padding: 8px 12px; border-radius: 10px; font-weight: 900;" onclick="odulAl('Ejderha Tılsımı', 3000)">3000 XP</button>
-                </div>`;
-                const closeBtn = marketModal.querySelector('.close-modal-btn');
-                closeBtn.insertAdjacentHTML('beforebegin', ganimetHTML);
-            }
-        }
-
-        function pomodoroTamamlandiMekanikleri() {
-            damageBoss(25);
-        }
-       
         let tahminGrafigi = null; 
 
-        function cizTahminGrafigi() {
+        window.cizTahminGrafigi = function() {
             const canvas = document.getElementById('tahminGrafigiCanvas');
             if (!canvas) return; 
             
@@ -767,9 +820,9 @@
                     }
                 }
             });
-        }
+        };
        
-        function temaDegistir() {
+        window.temaDegistir = function() {
             const body = document.body;
             const btn = document.getElementById('themeBtn');
             
@@ -784,7 +837,7 @@
                 localStorage.setItem('katalizTema', 'dark');
                 document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0f172a');
             }
-        }
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('katalizTema') === 'dark') {
@@ -792,8 +845,6 @@
                 document.getElementById('themeBtn').innerText = '☀️';
                 document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0f172a');
             }
-            
-            updateBossUI();
 
             setTimeout(() => {
                 if (typeof socket !== 'undefined') {
