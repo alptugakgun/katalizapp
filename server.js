@@ -913,7 +913,7 @@ io.on('connection', (socket) => {
             let bekleyenHatalar = ogrenci.hataDefteri ? ogrenci.hataDefteri.filter(h=>h.durum==='Bekliyor').length : 0;
 
             let prompt = `
-            Sen KatalizApp adlı yeni nesil oyunlaştırılmış eğitim sisteminin baş yapay zeka koçusun. Adın "Kaptan".
+            Sen SincAPP adlı yeni nesil oyunlaştırılmış eğitim sisteminin baş yapay zeka koçusun. Adın "Kaptan".
             Sert, disiplinli ama öğrencisini çok seven, motive edici bir üslubun var.
             
             Şu anda analiz ettiğin öğrencinin adı: ${veri.ogrenciAd}
@@ -966,7 +966,7 @@ io.on('connection', (socket) => {
             let bekleyenGorev = ogrenci.gorevler ? ogrenci.gorevler.filter(g => !g.tamamlandi).length : 0;
 
             let prompt = `
-            Sen KatalizApp eğitim sisteminin sevimli, motive edici ve zeki asistanısın.
+            Sen SincAPP eğitim sisteminin sevimli, motive edici ve zeki asistanısın.
             Şu an konuştuğun öğrencinin adı: ${veri.ogrenciAd}
             Öğrencinin Mevcut XP'si: ${xp} (Sistemdeki Rütbesi: ${rütbe})
             Öğrencinin Bekleyen/Yapılmamış Görev Sayısı: ${bekleyenGorev}
@@ -1007,5 +1007,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000; 
 server.listen(PORT, () => { 
-    console.log(`🚀 KatalizApp Çalışıyor! Port: ${PORT}`); 
+    console.log(`🚀 SincAPP Çalışıyor! Port: ${PORT}`); 
 });

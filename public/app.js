@@ -218,6 +218,7 @@ const konuSecimi = document.getElementById('konuSecimi');
 const display = document.getElementById('display');
 const startBtn = document.getElementById('startBtn');
 const pauseBtn = document.getElementById('pauseBtn');
+const pInput = document.getElementById('pomoInput'); // 🔥 Pomodoro Input eklendi
 
 let aktifDersString = localStorage.getItem(`${aktifOgrenci}_activeDers`);
 if(!aktifDersString || !aktifDersString.includes('[')) {
@@ -231,11 +232,11 @@ let anlikXp = 0;
 let oncekiGorevSayisi = -1; 
 let sonZoomLinki = '';
 let bekleyenDuelloRakip = '';
+let lastTick = 0; // 🔥 Günlük toplam hesaplama değişkeni
 
 let yoklamaTimer;
 let yoklamaGeriSayimInterval;
 
-// 🔥 YENİ: EJDERHA (BOSS) SUNUCU SENKRONİZASYONU 🔥
 let currentBossHp = 10000; 
 const maxBossHp = 10000;
 let ejderhaOluMu = false;
@@ -334,6 +335,8 @@ function dersDegisikliginiKaydet() {
         startBtn.style.display = 'block'; 
         startBtn.innerHTML = "▶ Başla"; 
         
+        if(pInput) pInput.disabled = false; // Ders değiştiğinde Input'u tekrar aç
+        
         document.getElementById('statusText').innerHTML = "Ders değişti, sayaç durduruldu."; 
         document.getElementById('statusText').style.backgroundColor = "var(--bg-input)"; 
         document.getElementById('statusText').style.color = "var(--text-secondary)"; 
@@ -351,7 +354,6 @@ function dersDegisikliginiKaydet() {
     
     let currentSaved = parseInt(localStorage.getItem(`${aktifOgrenci}_${yeniDers}_savedTime`)) || 0; 
     gostergeyiGuncelle(currentSaved); 
-    socket.emit('sure_guncelle', { ogrenciAd: aktifOgrenci, sure: display.innerHTML, kocKodu: kocKodu }); 
     
     if(currentSaved > 0 && mode === 'normal') { 
         startBtn.innerHTML = "▶ Devam Et"; 
@@ -364,6 +366,20 @@ if(sinavSecimi) sinavSecimi.addEventListener('change', () => mufredatYukle(false
 if(dersSecimiUI) dersSecimiUI.addEventListener('change', () => konuYukle(false)); 
 if(konuSecimi) konuSecimi.addEventListener('change', dersDegisikliginiKaydet);
 
+// 🔥 YENİ: POMODORO SÜRESİNİ ANLIK GÜNCELLEME 🔥
+if(pInput) {
+    pInput.addEventListener('input', function() {
+        if (mode === 'pomodoro' && !running) {
+            let val = parseInt(this.value);
+            // Sıfır veya negatif girerse 1 yap, boş bırakırsa 25 kalsın
+            if(isNaN(val) || val <= 0) val = 25; 
+            
+            display.innerHTML = (val < 10 ? "0" + val : val) + ":00";
+            localStorage.setItem(`${aktifOgrenci}_pomoDuration`, val);
+        }
+    });
+}
+
 function gostergeyiGuncelle(sureMs) { 
     if(mode === 'normal') { 
         let hours = Math.floor((sureMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -375,7 +391,8 @@ function gostergeyiGuncelle(sureMs) {
                             (seconds < 10 ? "0"+seconds : seconds); 
         return false; 
     } else { 
-        let val = parseInt(document.getElementById('pomoInput').value) || 25;
+        // Pomodoro süresini artık input'tan dinamik alıyor
+        let val = parseInt(pInput ? pInput.value : 25) || 25;
         let kalan = (val * 60 * 1000) - sureMs; 
         
         if(kalan <= 0) { 
@@ -460,16 +477,16 @@ window.setMode = function(m) {
         mPomo.className = m === 'pomodoro' ? 'mode-btn mode-active' : 'mode-btn mode-passive'; 
     }
     
-    let pInput = document.getElementById('pomoInput');
-    if(pInput) {
-        pInput.style.display = m === 'pomodoro' ? 'block' : 'none'; 
-    }
-
     if (m === 'pomodoro') {
-        let val = parseInt(document.getElementById('pomoInput').value) || 25;
+        if(pInput) { 
+            pInput.style.display = 'block'; 
+            pInput.disabled = false; 
+        }
+        let val = parseInt(pInput ? pInput.value : 25) || 25;
         display.innerHTML = (val < 10 ? "0"+val : val) + ":00";
         startBtn.innerHTML = "▶ Başla";
     } else {
+        if(pInput) pInput.style.display = 'none';
         let gercekDers = getDers();
         let sTime = parseInt(localStorage.getItem(`${aktifOgrenci}_${gercekDers}_savedTime`)) || 0;
         gostergeyiGuncelle(sTime);
@@ -481,14 +498,33 @@ window.setMode = function(m) {
 window.startTimer = function() { 
     if (!running) { 
         let gercekDers = getDers();
+        
+        // Günlük toplam hazırlığı
+        let bugunStr = new Date().toLocaleDateString('tr-TR');
+        let gunlukToplamKey = `${aktifOgrenci}_toplamMs_${bugunStr}`;
 
         localStorage.setItem(`${aktifOgrenci}_startTime`, new Date().getTime()); 
         localStorage.setItem(`${aktifOgrenci}_running`, 'true'); 
         
+        lastTick = new Date().getTime(); // Tick saatini başlat
+        
+        if(pInput && mode === 'pomodoro') pInput.disabled = true; // Başlayınca süreyi değiştiremesin
+        
         tInterval = setInterval(() => { 
-            let sessionElapsed = new Date().getTime() - parseInt(localStorage.getItem(`${aktifOgrenci}_startTime`));
+            let now = new Date().getTime();
+            let sessionElapsed = now - parseInt(localStorage.getItem(`${aktifOgrenci}_startTime`));
             let totalDiff = sessionElapsed + (parseInt(localStorage.getItem(`${aktifOgrenci}_${gercekDers}_savedTime`)) || 0); 
             
+            // 🔥 YENİ: GÜNLÜK TOPLAM KRONOMETRE HESAPLAMASI 🔥
+            let delta = now - lastTick;
+            lastTick = now;
+            let gunlukToplamGecenMs = parseInt(localStorage.getItem(gunlukToplamKey)) || 0;
+            gunlukToplamGecenMs += delta;
+            localStorage.setItem(gunlukToplamKey, gunlukToplamGecenMs);
+
+            let tDisplay = document.getElementById('gunlukToplamDisplay');
+            if(tDisplay) tDisplay.innerText = "Bugün Toplam: " + msToTime(gunlukToplamGecenMs);
+
             let bittiMi = false;
             if (mode === 'pomodoro') {
                 bittiMi = gostergeyiGuncelle(sessionElapsed); 
@@ -506,7 +542,12 @@ window.startTimer = function() {
                 }
             } 
             
-            socket.emit('sure_guncelle', { ogrenciAd: aktifOgrenci, sure: display.innerHTML, kocKodu: kocKodu }); 
+            socket.emit('sure_guncelle', { 
+                ogrenciAd: aktifOgrenci, 
+                sure: display.innerHTML, 
+                toplamSure: msToTime(gunlukToplamGecenMs), // Öğretmene yolluyoruz
+                kocKodu: kocKodu 
+            }); 
         }, 1000); 
         
         running = true; 
@@ -555,6 +596,8 @@ window.pauseTimer = function(otomatikMi = false) {
         startBtn.style.display = 'block'; 
         startBtn.innerHTML = otomatikMi ? "▶ Başla" : "▶ Devam Et"; 
         
+        if(pInput) pInput.disabled = false; // Mola verilince Input'u tekrar aç
+
         if(document.getElementById('statusText').innerHTML !== "🚨 Masadan ayrıldığın için odaklanma durduruldu!") {
             document.getElementById('statusText').innerHTML = otomatikMi ? "🎉 Pomodoro Bitti!" : "⏸️ Mola Verildi."; 
             document.getElementById('statusText').style.backgroundColor = "rgba(245, 158, 11, 0.1)"; 
@@ -1251,7 +1294,7 @@ socket.on('yeni_chat_mesaji', (msg) => {
 socket.on('chatbot_cevabi', (cevapMetni) => { 
     sesCal(); 
     const body = document.getElementById('botBody'); 
-    body.innerHTML += `<div style="align-self: flex-start; background: var(--bg-container); color: var(--text-primary); padding: 10px 14px; border-radius: 14px; font-size: 13px; max-width: 80%; line-height: 1.4; margin-bottom: 10px; font-weight: 700; border: 1px solid var(--border-light);"><div style="font-size: 10px; font-weight: 900; margin-bottom: 4px; opacity: 0.8;">🤖 KatalizApp AI</div>${cevapMetni}</div>`; 
+    body.innerHTML += `<div style="align-self: flex-start; background: var(--bg-container); color: var(--text-primary); padding: 10px 14px; border-radius: 14px; font-size: 13px; max-width: 80%; line-height: 1.4; margin-bottom: 10px; font-weight: 700; border: 1px solid var(--border-light);"><div style="font-size: 10px; font-weight: 900; margin-bottom: 4px; opacity: 0.8;">🤖 SincAPP AI</div>${cevapMetni}</div>`; 
     body.scrollTop = body.scrollHeight; 
 });
 
@@ -1295,13 +1338,28 @@ document.addEventListener("DOMContentLoaded", () => {
     
     let mNormal = document.getElementById('modeNormal');
     let mPomo = document.getElementById('modePomo');
-    let pInput = document.getElementById('pomoInput');
+
+    // 🔥 GÜNLÜK TOPLAM SÜREYİ EKRANA BASMAK İÇİN ELEMENT OLUŞTURUYORUZ 🔥
+    let displayKutusu = document.getElementById('display');
+    if(displayKutusu && !document.getElementById('gunlukToplamDisplay')) {
+        let bugunStr = new Date().toLocaleDateString('tr-TR');
+        let gunlukToplamKey = `${aktifOgrenci}_toplamMs_${bugunStr}`;
+        let mevcutToplam = parseInt(localStorage.getItem(gunlukToplamKey)) || 0;
+        
+        let toplamGosterge = document.createElement('div');
+        toplamGosterge.id = 'gunlukToplamDisplay';
+        toplamGosterge.style.cssText = "font-size: 14px; font-weight: 800; color: var(--primary); margin-top: -20px; margin-bottom: 25px; text-align: center; text-transform: uppercase; letter-spacing: 1px;";
+        toplamGosterge.innerText = "Bugün Toplam: " + msToTime(mevcutToplam);
+        displayKutusu.parentNode.insertBefore(toplamGosterge, displayKutusu.nextSibling);
+    }
 
     if(mode === 'pomodoro') { 
-        if(pInput) pInput.value = localStorage.getItem(`${aktifOgrenci}_pomoDuration`) || 25; 
-        if(pInput) pInput.style.display = 'block'; 
+        if(pInput) { 
+            pInput.value = localStorage.getItem(`${aktifOgrenci}_pomoDuration`) || 25; 
+            pInput.style.display = 'block'; 
+        } 
         if(mNormal) mNormal.className = 'mode-btn mode-passive'; 
-        if(mPomo) {
+        if(mPomo) { 
             mPomo.className = 'mode-btn mode-active'; 
             mPomo.style.background = '#ef4444'; 
             mPomo.style.boxShadow = '0 4px 0 #b91c1c'; 
@@ -1316,9 +1374,10 @@ document.addEventListener("DOMContentLoaded", () => {
         running = true; 
         startBtn.style.display = 'none'; 
         pauseBtn.style.display = 'block'; 
+        lastTick = new Date().getTime();
         
         let statusT = document.getElementById('statusText');
-        if(statusT) {
+        if(statusT) { 
             statusT.innerHTML = "🟢 Odak modu aktif!"; 
             statusT.style.backgroundColor = "rgba(16, 185, 129, 0.1)"; 
             statusT.style.color = "#10b981"; 
@@ -1327,9 +1386,22 @@ document.addEventListener("DOMContentLoaded", () => {
         if(pInput) pInput.disabled = true;
         
         tInterval = setInterval(() => { 
-            let sessionElapsed = new Date().getTime() - parseInt(localStorage.getItem(`${aktifOgrenci}_startTime`));
+            let now = new Date().getTime();
+            let sessionElapsed = now - parseInt(localStorage.getItem(`${aktifOgrenci}_startTime`));
             let totalDiff = sessionElapsed + (parseInt(localStorage.getItem(`${aktifOgrenci}_${aktifDersString}_savedTime`)) || 0); 
             
+            // 🔥 YENİ: GÜNLÜK TOPLAM KRONOMETRE HESAPLAMASI 🔥
+            let delta = now - lastTick;
+            lastTick = now;
+            let bugunStr = new Date().toLocaleDateString('tr-TR');
+            let gunlukToplamKey = `${aktifOgrenci}_toplamMs_${bugunStr}`;
+            let gunlukToplamGecenMs = parseInt(localStorage.getItem(gunlukToplamKey)) || 0;
+            gunlukToplamGecenMs += delta;
+            localStorage.setItem(gunlukToplamKey, gunlukToplamGecenMs);
+
+            let tDisplay = document.getElementById('gunlukToplamDisplay');
+            if(tDisplay) tDisplay.innerText = "Bugün Toplam: " + msToTime(gunlukToplamGecenMs);
+
             let bittiMi = false;
             if (mode === 'pomodoro') {
                 bittiMi = gostergeyiGuncelle(sessionElapsed);
@@ -1347,10 +1419,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             } 
             
-            socket.emit('sure_guncelle', { ogrenciAd: aktifOgrenci, sure: display.innerHTML, kocKodu: kocKodu }); 
+            socket.emit('sure_guncelle', { 
+                ogrenciAd: aktifOgrenci, 
+                sure: display.innerHTML, 
+                toplamSure: msToTime(gunlukToplamGecenMs),
+                kocKodu: kocKodu 
+            }); 
         }, 1000);
         
-        socket.emit('ogrenci_derse_basladi', { ogrenciAd: aktifOgrenci, ders: aktifDersString, mesaj: 'Derse geri döndü', kocKodu: kocKodu });
+        socket.emit('ogrenci_derse_basladi', { 
+            ogrenciAd: aktifOgrenci, 
+            ders: aktifDersString, 
+            mesaj: 'Derse geri döndü', 
+            kocKodu: kocKodu 
+        });
         
         rastgeleYoklamaKur();
         

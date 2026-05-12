@@ -1113,6 +1113,12 @@
         socket.on('ogretmene_sure_guncelle', (veri) => { 
             let timerEl = document.getElementById("timer-card-" + veri.ogrenciAd.replace(/\s+/g, '-')); 
             if(timerEl) timerEl.innerText = veri.sure; 
+            
+            // 🔥 YENİ: Toplam Süre Göstergesi Güncellemesi
+            let toplamSureEl = document.getElementById("toplam-sure-" + veri.ogrenciAd.replace(/\s+/g, '-'));
+            if(toplamSureEl && veri.toplamSure) {
+                toplamSureEl.innerText = `Bugün: ${veri.toplamSure}`;
+            }
         });
         
         socket.on('ogretmene_canli_bildirim', (gelenVeri) => { 
@@ -1222,7 +1228,10 @@
                                 ${gosterilecekDers}
                             </div>
                         </div>
-                        <div id="timer-${id}" style="font-size:24px; font-weight:900; color:var(--blue-neon); background:rgba(0,0,0,0.5); padding:8px 12px; border-radius:15px; border:1px solid var(--glass-border); text-shadow: 0 0 10px rgba(59,130,246,0.5);">00:00:00</div>
+                        <div style="text-align: right;">
+                            <div id="timer-${id}" style="font-size:24px; font-weight:900; color:var(--blue-neon); background:rgba(0,0,0,0.5); padding:8px 12px; border-radius:15px; border:1px solid var(--glass-border); text-shadow: 0 0 10px rgba(59,130,246,0.5);">00:00:00</div>
+                            <div id="toplam-sure-${id}" style="font-size: 11px; font-weight: bold; color: var(--green-neon); margin-top: 5px;">Bugün: -</div>
+                        </div>
                     </div>
                     ${btnHtml}
                     ${gorevGirdi}`;
