@@ -9,7 +9,22 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 // Güvenlik ayarı: API Anahtarın artık .env dosyasından güvenli bir şekilde çekiliyor
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
 const app = express();
+app.use(helmet({
+    contentSecurityPolicy: false // Socket.io ve dış resimleri engellememesi için kapalı tutuyoruz
+}));
+
+// DDoS ve Brute-Force koruması: 15 dakikada 100 API isteği limiti
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, 
+    max: 100,
+    message: { basari: false, mesaj: "Çok fazla istek attınız, lütfen biraz bekleyin." }
+});
+app.use('/api/', apiLimiter);
+
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -953,7 +968,10 @@ io.on('connection', (socket) => {
             const result = await model.generateContent(prompt);
             const response = await result.response;
             
-            let aiData = JSON.parse(response.text()); 
+            let textRes = response.text();
+            // Gemini bazen markdown formatında döner, onu temizle
+            textRes = textRes.replace(/```json/gi, '').replace(/```/g, '').trim();
+            let aiData = JSON.parse(textRes); 
 
             io.to(veri.kocKodu).emit('yapay_zeka_raporu', { 
                 ad: veri.ogrenciAd, 
@@ -1007,7 +1025,10 @@ io.on('connection', (socket) => {
             const result = await model.generateContent(prompt);
             const response = await result.response;
             
-            let aiData = JSON.parse(response.text());
+            let textRes = response.text();
+            // Hatalı markdown formatlamalarını temizle
+            textRes = textRes.replace(/```json/gi, '').replace(/```/g, '').trim();
+            let aiData = JSON.parse(textRes);
             
             socket.emit('chatbot_cevabi', aiData.cevap); 
 

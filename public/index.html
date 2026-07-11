@@ -472,5 +472,35 @@
             }, 100);
         });
     </script>
+
+    <!-- KVKK / Çerez Politikası Banner -->
+    <div id="cookieConsentBanner" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 600px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); z-index: 9999; color: white; flex-direction: column; gap: 15px; transition: transform 0.5s ease, opacity 0.5s ease;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 24px;">🍪</span>
+            <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #3b82f6;">Gizlilik & Çerez Politikası</h3>
+        </div>
+        <p style="margin: 0; font-size: 14px; color: #cbd5e1; line-height: 1.5;">
+            Size daha iyi bir deneyim sunabilmek için sitemizde yasal düzenlemelere (KVKK/GDPR) uygun zorunlu çerezler kullanıyoruz. Sitemizi kullanarak çerez politikamızı kabul etmiş olursunuz.
+        </p>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button id="acceptCookiesBtn" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.3s, transform 0.2s; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);">Kabul Et</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const cookieBanner = document.getElementById("cookieConsentBanner");
+            const acceptBtn = document.getElementById("acceptCookiesBtn");
+            if (!localStorage.getItem("cookieConsent")) {
+                setTimeout(() => { cookieBanner.style.display = "flex"; }, 800);
+            }
+            acceptBtn.addEventListener("click", function() {
+                localStorage.setItem("cookieConsent", "true");
+                cookieBanner.style.transform = "translate(-50%, 100px)";
+                cookieBanner.style.opacity = "0";
+                setTimeout(() => { cookieBanner.style.display = "none"; }, 500);
+            });
+        });
+    </script>
 </body>
 </html>

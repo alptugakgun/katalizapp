@@ -1,21 +1,18 @@
 # KatalizApp (Eğitim Koçu) - Proje Hafızası
 
-## Mevcut Durum (Versiyon 2.0.2)
+## Mevcut Durum (Versiyon 2.0.3)
 - Proje `Express.js`, `MongoDB` (Mongoose) ve `Socket.io` altyapısı ile çalışmaktadır.
-- Android için `Capacitor` entegrasyonu vardır.
 - Yapay Zeka desteği `@google/generative-ai` (Gemini) ile sağlanmıştır.
 
 ## Son Yapılan Değişiklikler
+### Yapay Zeka Kararlılığı & Güvenlik Kalkanı (v2.0.3)
+- `helmet` ve `express-rate-limit` paketleri kurularak sunucu tarafı XSS ve DDoS (Brute-force) korumaları eklendi.
+- AI (Gemini) modelinin dönderdiği hatalı JSON/Markdown yapısını filtreleyip sunucu çökmesini önleyen Regex tabanlı bir temizleyici entegre edildi.
+- `index.html` ana sayfasına yasal düzenlemelere (KVKK/GDPR) uygun, localStorage destekli "Glassmorphism" tasarımlı Çerez (Cookie) Onay Banner'ı eklendi.
+
 ### SEO ve Google Görünürlüğü (v2.0.2)
 - Tüm HTML sayfalarına kapsamlı Meta, Open Graph ve Twitter SEO etiketleri eklendi.
-- Arama motoru botları için `public/robots.txt` dosyası oluşturuldu.
-- Sitenin mimarisini belirten `public/sitemap.xml` eklendi.
-- Google Search Console kaydına hazır hale getirildi.
-
-### URL Yönlendirme Optimizasyonu (v2.0.1)
-- Tüm sayfalarda Clean URL (`.html` uzantısı olmadan) yapısına geçildi.
-- Service Worker (`sw.js`) v2 sürümüne güncellendi ve eski hatalı cache'i temizleme özelliği eklendi.
+- Arama motoru botları için `public/robots.txt` ve `public/sitemap.xml` dosyaları oluşturuldu.
 
 ## Yapılacaklar Listesi / Hatırlatmalar (Yakında Başlanacaklar)
-- [ ] Yapay Zeka (Gemini Asistan) ile ilgili yaşanan genel problemler çözülecek.
-- [ ] Sistemdeki güvenlik açıkları ve Çerez (Cookie) politikaları düzenlenecek.
+- (Şu anlık büyük teknik bir eksik bulunmuyor, kullanıcının talepleri doğrultusunda ilerlenecek)
