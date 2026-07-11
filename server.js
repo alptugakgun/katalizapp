@@ -13,6 +13,20 @@ const app = express();
 app.use(express.json());
 app.use(express.static('public'));
 
+// ==========================================
+// SAYFA YÖNLENDİRMELERİ (CLEAN URL)
+// ==========================================
+app.get('/', (req, res) => res.sendFile(__dirname + '/public/index.html'));
+app.get('/login', (req, res) => res.sendFile(__dirname + '/public/login.html'));
+app.get('/kayit', (req, res) => res.sendFile(__dirname + '/public/kayit.html'));
+app.get('/ogretmen-login', (req, res) => res.sendFile(__dirname + '/public/ogretmen-login.html'));
+app.get('/ogretmen-kayit', (req, res) => res.sendFile(__dirname + '/public/ogretmen-kayit.html'));
+app.get('/veli-login', (req, res) => res.sendFile(__dirname + '/public/veli-login.html'));
+app.get('/ogrenci', (req, res) => res.sendFile(__dirname + '/public/ogrenci.html'));
+app.get('/ogretmen', (req, res) => res.sendFile(__dirname + '/public/ogretmen.html'));
+app.get('/veli', (req, res) => res.sendFile(__dirname + '/public/veli.html'));
+app.get('/admin', (req, res) => res.sendFile(__dirname + '/public/admin.html'));
+
 const server = http.createServer(app);
 const io = new Server(server, { 
     cors: { origin: "*" }, 

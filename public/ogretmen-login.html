@@ -91,9 +91,9 @@
         <button onclick="kocGiris()">Sınıfıma Gir</button>
         
         <div class="footer-links">
-            Eğitmen hesabınız yok mu? <a href="ogretmen-kayit.html">Kayıt Olun</a> <br>
+            Eğitmen hesabınız yok mu? <a href="/ogretmen-kayit">Kayıt Olun</a> <br>
             <a href="#" onclick="alert('Şifrenizi mi unuttunuz? Lütfen sistem yöneticisi (Kaptan) ile iletişime geçin. 🛠️')" class="forgot-pass">🔒 Şifremi Unuttum</a> <br>
-            <a href="index.html" style="color:#94a3b8;">← Anasayfaya Dön</a>
+            <a href="/" style="color:#94a3b8;">← Anasayfaya Dön</a>
         </div>
     </div>
 
@@ -115,7 +115,7 @@
                 if(data.basari) {
                     localStorage.setItem('ogretmenKimligi', ad);
                     localStorage.setItem('kocKodu', data.kocKodu);
-                    window.location.href = 'ogretmen.html';
+                    window.location.href='/ogretmen';
                 } else {
                     alert(data.mesaj);
                 }

@@ -91,8 +91,8 @@
         <button onclick="kocKayit()">Sınıfımı Kur</button>
         
         <div class="footer-links">
-            Zaten hesabınız var mı? <a href="ogretmen-login.html">Giriş Yapın</a> <br>
-            <a href="index.html" style="color:#94a3b8;">← Anasayfaya Dön</a>
+            Zaten hesabınız var mı? <a href="/ogretmen-login">Giriş Yapın</a> <br>
+            <a href="/" style="color:#94a3b8;">← Anasayfaya Dön</a>
         </div>
     </div>
 
@@ -113,7 +113,7 @@
                 
                 if(data.basari) {
                     alert(data.mesaj + "\nLütfen kodu not alın!");
-                    window.location.href = 'ogretmen-login.html';
+                    window.location.href='/ogretmen-login';
                 } else {
                     alert(data.mesaj);
                 }

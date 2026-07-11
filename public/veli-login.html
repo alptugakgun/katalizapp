@@ -93,7 +93,7 @@
         <button onclick="veliGiris()">Giriş Yap</button>
         
         <div class="footer-links">
-            <a href="index.html" style="color:#94a3b8;">← Anasayfaya Dön</a>
+            <a href="/" style="color:#94a3b8;">← Anasayfaya Dön</a>
         </div>
     </div>
 
@@ -114,7 +114,7 @@
                 if(data.basari) {
                     localStorage.setItem('veliKimligi', data.ogrenciAd);
                     localStorage.setItem('kocKodu', data.kocKodu);
-                    window.location.href = 'veli.html';
+                    window.location.href='/veli';
                 } else {
                     alert(data.mesaj);
                 }

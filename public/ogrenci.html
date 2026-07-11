@@ -17,7 +17,7 @@
 
     <script>
         if (!localStorage.getItem('ogrenciKimligi')) {
-            window.location.href = 'login.html';
+            window.location.href='/login';
         }
     </script>
     
@@ -444,7 +444,7 @@
                     <button class="tool-btn bg-market" onclick="document.getElementById('marketModal').style.display='flex'"><span>🛒</span> XP Market</button>
                     <button class="tool-btn bg-duel" onclick="document.getElementById('duelloModal').style.display='flex'"><span>⚔️</span> Düello Arenası</button>
                     <button class="tool-btn bg-test" onclick="document.getElementById('rehberlikModal').style.display='flex'"><span>🧠</span> Psikolojik Test</button>
-                    <button class="tool-btn bg-logout" onclick="localStorage.clear(); window.location.href='login.html'" style="grid-column: span 2;"><span>🚪</span> Oturumu Kapat</button>
+                    <button class="tool-btn bg-logout" onclick="localStorage.clear(); window.location.href='/login'" style="grid-column: span 2;"><span>🚪</span> Oturumu Kapat</button>
                 </div>
             </div>
 

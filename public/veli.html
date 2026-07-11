@@ -7,7 +7,7 @@
     
     <script>
         if (!localStorage.getItem('veliKimligi')) {
-            window.location.href = 'veli-login.html';
+            window.location.href='/veli-login';
         }
     </script>
     
@@ -239,7 +239,7 @@
 
     <div class="header">
         <h1 id="veliKarsilama">👨‍👩‍👧‍👦 KatalizApp Veli Portalı</h1>
-        <button onclick="localStorage.clear(); window.location.href='veli-login.html'" class="btn-red">🚪 Çıkış Yap</button>
+        <button onclick="localStorage.clear(); window.location.href='/veli-login'" class="btn-red">🚪 Çıkış Yap</button>
     </div>
 
     <div class="ajanda-kutu" id="ajandaKutu">
