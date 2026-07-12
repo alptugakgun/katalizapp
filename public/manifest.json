@@ -2,7 +2,7 @@
   "name": "KatalizApp MIS",
   "short_name": "KatalizApp",
   "description": "Yeni Nesil Eğitim Yönetim Sistemi",
-  "start_url": "/login.html",
+  "start_url": "/login",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4f46e5",

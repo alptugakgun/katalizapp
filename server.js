@@ -14,7 +14,16 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 app.use(helmet({
-    contentSecurityPolicy: false // Socket.io ve dış resimleri engellememesi için kapalı tutuyoruz
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.socket.io"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "https://cdn-icons-png.flaticon.com", "https://*"],
+            connectSrc: ["'self'", "wss:", "ws:"]
+        }
+    }
 }));
 
 // DDoS ve Brute-Force koruması: 15 dakikada 100 API isteği limiti
@@ -206,9 +215,7 @@ app.post('/api/koc/kayit', async (req, res) => {
         
         await yeniKoc.save(); 
         res.json({ basari: true, mesaj: `Kaydınız yapıldı. Davet Kodunuz: ${yeniKod}`, kocKodu: yeniKod }); 
-    } catch (e) { 
-        res.json({ basari: false }); 
-    } 
+    } catch (e) { console.error("🔴 Sistem Hatası (API):", e); res.json({ basari: false }); } 
 });
 
 app.post('/api/koc/giris', async (req, res) => { 
@@ -223,9 +230,7 @@ app.post('/api/koc/giris', async (req, res) => {
             }
         }
         res.json({ basari: false, mesaj: "Hatalı isim veya şifre!" }); 
-    } catch (e) { 
-        res.json({ basari: false }); 
-    } 
+    } catch (e) { console.error("🔴 Sistem Hatası (API):", e); res.json({ basari: false }); } 
 });
 
 app.post('/api/kayit', async (req, res) => { 
@@ -264,9 +269,7 @@ app.post('/api/kayit', async (req, res) => {
         
         await yeniOgrenci.save(); 
         res.json({ basari: true, mesaj: "KatalizApp'e hoş geldin!" }); 
-    } catch (e) { 
-        res.json({ basari: false }); 
-    } 
+    } catch (e) { console.error("🔴 Sistem Hatası (API):", e); res.json({ basari: false }); } 
 });
 
 app.post('/api/giris', async (req, res) => { 
@@ -281,9 +284,7 @@ app.post('/api/giris', async (req, res) => {
             }
         }
         res.json({ basari: false, mesaj: "Kullanıcı adı veya şifre hatalı!" }); 
-    } catch (e) { 
-        res.json({ basari: false }); 
-    } 
+    } catch (e) { console.error("🔴 Sistem Hatası (API):", e); res.json({ basari: false }); } 
 });
 
 app.post('/api/veli/giris', async (req, res) => { 
@@ -295,9 +296,7 @@ app.post('/api/veli/giris', async (req, res) => {
         } else {
             res.json({ basari: false, mesaj: "Veli Takip Kodu bulunamadı!" }); 
         }
-    } catch (e) { 
-        res.json({ basari: false }); 
-    } 
+    } catch (e) { console.error("🔴 Sistem Hatası (API):", e); res.json({ basari: false }); } 
 });
 
 app.post('/api/sifreler', async (req, res) => { 
@@ -432,7 +431,7 @@ io.on('connection', (socket) => {
                 let list = await Ogrenci.find({ kocKodu: veri.kocKodu });
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list); 
             } 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('masa_basi_uyarisi', async (veri) => {
@@ -449,7 +448,7 @@ io.on('connection', (socket) => {
                     mesaj: "🚨 DİKKAT! Öğrenci yoklamaya cevap vermedi, masada değil!"
                 });
             }
-        } catch(e) {}
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); }
     });
 
     socket.on('net_ekle', async (veri) => { 
@@ -484,7 +483,7 @@ io.on('connection', (socket) => {
                 let list = await Ogrenci.find({ kocKodu: veri.kocKodu });
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list); 
             } 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('rehberlik_testi_kaydet', async (veri) => {
@@ -503,7 +502,7 @@ io.on('connection', (socket) => {
                 let list = await Ogrenci.find({ kocKodu: veri.kocKodu });
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list);
             }
-        } catch(e) {}
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); }
     });
 
     socket.on('odul_satin_al', async (veri) => { 
@@ -522,7 +521,7 @@ io.on('connection', (socket) => {
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list); 
                 io.to(veri.kocKodu).emit('ogretmene_market_bildirimi', { ogrenci: veri.ogrenciAd, odul: veri.odul }); 
             } 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('odul_teslim_edildi', async (veri) => { 
@@ -536,7 +535,7 @@ io.on('connection', (socket) => {
                 let list = await Ogrenci.find({ kocKodu: veri.kocKodu });
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list); 
             } 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('hata_sorusu_ekle', async (veri) => { 
@@ -558,7 +557,7 @@ io.on('connection', (socket) => {
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list); 
                 io.to(veri.kocKodu).emit('ogretmene_market_bildirimi', { ogrenci: veri.ogrenciAd, odul: "Hata Defterine Soru Yükledi" }); 
             } 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('hata_sorusu_cozuldu', async (veri) => { 
@@ -577,7 +576,7 @@ io.on('connection', (socket) => {
                     io.to(veri.kocKodu).emit('gorev_guncellendi', list); 
                 } 
             } 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('isi_haritasi_guncelle', async (veri) => { 
@@ -593,7 +592,7 @@ io.on('connection', (socket) => {
                 let list = await Ogrenci.find({ kocKodu: veri.kocKodu });
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list); 
             } 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('aktivite_kaydet', async (veri) => {
@@ -623,7 +622,7 @@ io.on('connection', (socket) => {
                     io.to(veri.kocKodu).emit('gorev_guncellendi', list);
                 }
             }
-        } catch(e) {}
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); }
     });
 
    // MEVCUT "yeni_gorev_ekle" FONKSİYONUNU BUL VE BUNUNLA DEĞİŞTİR:
@@ -660,7 +659,7 @@ io.on('connection', (socket) => {
                 let list = await Ogrenci.find({ kocKodu: veri.kocKodu });
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list); 
             } 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     // HEMEN ALTINA BU YENİ ZİNCİR KIRICI FONKSİYONU EKLE:
@@ -704,7 +703,7 @@ io.on('connection', (socket) => {
                     io.to(veri.kocKodu).emit('gorev_guncellendi', list);
                 }
             }
-        } catch(e) {}
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); }
     });
 
     socket.on('gorev_tamamlandi', async (veri) => { 
@@ -738,7 +737,7 @@ io.on('connection', (socket) => {
                     io.to(veri.kocKodu).emit('gorev_guncellendi', list); 
                 } 
             } 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('calisma_plani_ekle', async (veri) => {
@@ -760,7 +759,7 @@ io.on('connection', (socket) => {
                 let list = await Ogrenci.find({ kocKodu: veri.kocKodu });
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list);
             }
-        } catch(e) {}
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); }
     });
 
     socket.on('calisma_plani_tamamla', async (veri) => {
@@ -782,7 +781,7 @@ io.on('connection', (socket) => {
                     io.to(veri.kocKodu).emit('gorev_guncellendi', list);
                 }
             }
-        } catch(e) {}
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); }
     });
     
     socket.on('calisma_plani_sil', async (veri) => {
@@ -796,7 +795,7 @@ io.on('connection', (socket) => {
                 let list = await Ogrenci.find({ kocKodu: veri.kocKodu });
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list);
             }
-        } catch(e) {}
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); }
     });
 
     socket.on('duello_teklif_et', (veri) => { 
@@ -817,7 +816,7 @@ io.on('connection', (socket) => {
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list); 
                 io.to(veri.kocKodu).emit('duello_basladi', { o1: veri.gonderen, o2: veri.hedef }); 
             } 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('yeni_kaynak_ekle', async (veri) => { 
@@ -825,7 +824,7 @@ io.on('connection', (socket) => {
             const yeniKaynak = new Kaynak({ id: Date.now(), kocKodu: veri.kocKodu, baslik: veri.baslik, url: veri.url, tarih: new Date().toLocaleDateString('tr-TR') }); 
             await yeniKaynak.save(); 
             io.to(veri.kocKodu).emit('yeni_kaynak_eklendi', yeniKaynak); 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('kaynak_sil', async (veri) => { 
@@ -833,7 +832,7 @@ io.on('connection', (socket) => {
             await Kaynak.deleteOne({ id: veri.id, kocKodu: veri.kocKodu }); 
             const list = await Kaynak.find({ kocKodu: veri.kocKodu }).sort({id: -1}); 
             io.to(veri.kocKodu).emit('kaynaklari_yukle', list); 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('kaynak_cozuldu', async (veri) => {
@@ -857,7 +856,7 @@ io.on('connection', (socket) => {
                     });
                 }
             }
-        } catch(e){}
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); }
     });
 
     socket.on('ogrenci_derse_basladi', async (veri) => { 
@@ -869,7 +868,7 @@ io.on('connection', (socket) => {
                 await ogrenci.save(); 
             } 
             io.to(veri.kocKodu).emit('ogretmene_canli_bildirim', ogrenci); 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('avatar_guncelle', async (veri) => { 
@@ -882,7 +881,7 @@ io.on('connection', (socket) => {
                 let list = await Ogrenci.find({ kocKodu: veri.kocKodu });
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list); 
             } 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('istatistik_guncelle', async (veri) => { 
@@ -898,7 +897,7 @@ io.on('connection', (socket) => {
                 let list = await Ogrenci.find({ kocKodu: veri.kocKodu });
                 io.to(veri.kocKodu).emit('gorev_guncellendi', list); 
             } 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('chat_mesaji_gonder', async (data) => { 
@@ -914,7 +913,7 @@ io.on('connection', (socket) => {
             }); 
             await n.save(); 
             io.to(data.kocKodu).emit('yeni_chat_mesaji', n); 
-        } catch(e) {} 
+        } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
     socket.on('sure_guncelle', (veri) => { 

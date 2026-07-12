@@ -15,4 +15,8 @@
 - Arama motoru botları için `public/robots.txt` ve `public/sitemap.xml` dosyaları oluşturuldu.
 
 ## Yapılacaklar Listesi / Hatırlatmalar (Yakında Başlanacaklar)
-- (Şu anlık büyük teknik bir eksik bulunmuyor, kullanıcının talepleri doğrultusunda ilerlenecek)
+- [x] Google Search Console üzerinden "Dizine Eklenmesini İste" işlemi yapılacak (Kullanıcı kota aşımı nedeniyle bekliyor, hatırlatılacak).
+- [x] **Gelişmiş Güvenlik (CSP):** `server.js` dosyasında `helmet` içerisindeki `contentSecurityPolicy: false` kaldırılarak sadece gerekli kaynaklara (Socket.io, vb.) izin veren Whitelist eklenecek.
+- [x] **Hata Yakalama ve Loglama:** `server.js` içerisindeki API ve veritabanı işlemlerinde (try-catch bloklarında) yutulan hatalar düzgünce konsola/loglara yazdırılacak.
+- [x] **Kod Temizliği (Refactoring):** `public/index.html` içerisindeki devasa `<style>` bloğu harici bir CSS dosyasına (`public/index.css`) taşınacak.
+- [x] **PWA ve Clean URL Uyumu:** `public/manifest.json` içindeki `start_url` ayarı `/login.html` yerine `/login` olarak güncellenecek.
