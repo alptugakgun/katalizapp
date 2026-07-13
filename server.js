@@ -13,6 +13,14 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
+
+// Googlebot ve diğer arama motorları için özel robots.txt rotası.
+// Güvenlik filtrelerine (Helmet) takılmaması ve tamamen saf bir dosya dönmesi için en üste koyuyoruz.
+app.get('/robots.txt', (req, res) => {
+    res.type('text/plain');
+    res.send("User-agent: *\nAllow: /\n\nSitemap: https://egitim-kocu-projesi2.onrender.com/sitemap.xml");
+});
+
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
