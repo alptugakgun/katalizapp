@@ -5,6 +5,13 @@
 - Yapay Zeka desteği `@google/generative-ai` (Gemini) ile sağlanmıştır.
 
 ## Son Yapılan Değişiklikler
+### İçerik Güvenliği, Görsellik ve Refactoring (v2.1.0)
+- `server.js` içerisindeki `helmet` güvenlik duvarına özel Content Security Policy (CSP) kuralları eklendi. Chart.js, Socket.io, Mixkit gibi CDN ve medya servislerine özel geçiş izinleri tanımlandı.
+- `server.js` içerisindeki hata yakalama mekanizmaları (`try-catch` blokları) güçlendirildi. Yutulan hatalar terminale `console.error` ile basılır hale getirildi.
+- Anasayfa (`index.html`) içerisindeki devasa CSS kodları harici bir `index.css` dosyasına ayrıştırılarak kod karmaşası giderildi.
+- Vitrin bölümüne, doğrudan canlı sistemden (Render üzerinden otomatik bot ile) çekilen gerçek uygulamanın (Öğrenci ve Eğitmen panellerinin) ekran görüntüleri eklendi.
+- PWA `manifest.json` dosyası temiz URL (`/login`) yapısına uygun olarak güncellendi.
+
 ### Yapay Zeka Kararlılığı & Güvenlik Kalkanı (v2.0.3)
 - `helmet` ve `express-rate-limit` paketleri kurularak sunucu tarafı XSS ve DDoS (Brute-force) korumaları eklendi.
 - AI (Gemini) modelinin dönderdiği hatalı JSON/Markdown yapısını filtreleyip sunucu çökmesini önleyen Regex tabanlı bir temizleyici entegre edildi.
@@ -15,8 +22,5 @@
 - Arama motoru botları için `public/robots.txt` ve `public/sitemap.xml` dosyaları oluşturuldu.
 
 ## Yapılacaklar Listesi / Hatırlatmalar (Yakında Başlanacaklar)
-- [x] Google Search Console üzerinden "Dizine Eklenmesini İste" işlemi yapılacak (Kullanıcı kota aşımı nedeniyle bekliyor, hatırlatılacak).
-- [x] **Gelişmiş Güvenlik (CSP):** `server.js` dosyasında `helmet` içerisindeki `contentSecurityPolicy: false` kaldırılarak sadece gerekli kaynaklara (Socket.io, vb.) izin veren Whitelist eklenecek.
-- [x] **Hata Yakalama ve Loglama:** `server.js` içerisindeki API ve veritabanı işlemlerinde (try-catch bloklarında) yutulan hatalar düzgünce konsola/loglara yazdırılacak.
-- [x] **Kod Temizliği (Refactoring):** `public/index.html` içerisindeki devasa `<style>` bloğu harici bir CSS dosyasına (`public/index.css`) taşınacak.
-- [x] **PWA ve Clean URL Uyumu:** `public/manifest.json` içindeki `start_url` ayarı `/login.html` yerine `/login` olarak güncellenecek.
+- [ ] Google Search Console üzerinden "Dizine Eklenmesini İste" işlemi denenecek (Google kotaları yenilendiğinde).
+- [ ] (Gelecek fikirleriniz ve yeni görevlerimiz eklenecek...)

@@ -12,6 +12,15 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
+// 🛡️ GÜVENLİK KALKANARI (v3.0)
+const mongoSanitize = require('express-mongo-sanitize');
+const cookieParser = require('cookie-parser');
+const { girdiDogrula } = require('./middleware/sanitize');
+const { adminGirisController, adminCikisController } = require('./middleware/auth');
+const { adminKorumasi } = require('./middleware/adminAuth');
+const { sifreSifirlamaTokeniUret, tokenHashDogrula } = require('./middleware/resetToken');
+const { sifirlamaMailiGonder } = require('./utils/mailer');
+
 const app = express();
 
 // Googlebot ve diğer arama motorları için özel robots.txt rotası.
@@ -44,8 +53,21 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(cookieParser()); // 🛡️ Cookie tabanlı JWT auth için gerekli
+app.use(mongoSanitize()); // 🛡️ NoSQL Injection koruması: $ne, $gt gibi operatörleri req.body/query/params'dan temizler
 app.use(express.static('public'));
+
+// 🛡️ Brute-Force Koruması: Giriş endpoint'leri için özel sıkı rate limiter
+const girisLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 dakika pencere
+    max: 5, // Maksimum 5 deneme
+    message: { basari: false, mesaj: 'Çok fazla başarısız giriş denemesi. 15 dakika sonra tekrar deneyiniz.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    // GÜVENLİK: Sadece başarısız istekleri say (başarılı olanlar limiti etkilemesin)
+    skipSuccessfulRequests: true
+});
 
 // ==========================================
 // SAYFA YÖNLENDİRMELERİ (CLEAN URL)
@@ -84,7 +106,10 @@ const ogretmenSchema = new mongoose.Schema({
     kocAd: String, 
     sifre: String, 
     kocKodu: String,
-    finans: { type: Object, default: {} } 
+    finans: { type: Object, default: {} },
+    // 🛡️ Güvenli parola sıfırlama token alanları
+    sifreSifirlamaToken: { type: String, default: null },
+    sifreSifirlamaExpires: { type: Date, default: null }
 });
 const Ogretmen = mongoose.model('Ogretmen', ogretmenSchema);
 
@@ -112,7 +137,10 @@ const ogrenciSchema = new mongoose.Schema({
     hataDefteri: { type: Array, default: [] },
     rehberlikTestleri: { type: Array, default: [] },
     tamamlananKaynaklar: { type: Array, default: [] },
-    aktiviteGecmisi: { type: Array, default: [] }
+    aktiviteGecmisi: { type: Array, default: [] },
+    // 🛡️ Güvenli parola sıfırlama token alanları
+    sifreSifirlamaToken: { type: String, default: null },
+    sifreSifirlamaExpires: { type: Date, default: null }
 });
 const Ogrenci = mongoose.model('Ogrenci', ogrenciSchema);
 
@@ -137,78 +165,159 @@ const kaynakSchema = new mongoose.Schema({
 const Kaynak = mongoose.model('Kaynak', kaynakSchema);
 
 // ==========================================
-// 2. HTTP API İŞLEMLERİ (GÜVENLİ)
+// 2. HTTP API İŞLEMLERİ (GÜVENLİ v3.0)
 // ==========================================
 
-app.post('/api/admin', async (req, res) => { 
-    const { sifre } = req.body; 
-    if (sifre === process.env.ADMIN_PASS) { 
+// 🛡️ ADMIN GİRİŞ — JWT + httpOnly Cookie (Brute-force korumalı)
+app.post('/api/admin/giris', girisLimiter, adminGirisController);
+
+// 🛡️ ADMIN ÇIKIŞ — Cookie temizleme
+app.post('/api/admin/cikis', adminCikisController);
+
+// 🛡️ ADMIN VERİ ÇEK — JWT middleware ile korunuyor (body'de şifre YOK)
+app.post('/api/admin', adminKorumasi, async (req, res) => { 
+    try {
         let koclar = await Ogretmen.find(); 
         let ogrler = await Ogrenci.find(); 
         res.json({ basari: true, data: { koclar, ogrler } }); 
-    } else { 
-        res.json({ basari: false }); 
-    } 
-});
-
-app.post('/api/admin/finans_kaydet', async (req, res) => {
-    const { sifre, kocKodu, finans } = req.body;
-    if (sifre === process.env.ADMIN_PASS) {
-        await Ogretmen.updateOne({ kocKodu: kocKodu }, { finans: finans });
-        res.json({ basari: true });
-    } else { 
-        res.json({ basari: false }); 
+    } catch (e) { 
+        console.error("🔴 Admin Veri Hatası:", e);
+        res.status(500).json({ basari: false }); 
     }
 });
 
-app.post('/api/admin/sil', async (req, res) => { 
-    const { sifre, kod } = req.body; 
-    if (sifre === process.env.ADMIN_PASS) { 
+// 🛡️ ADMIN FİNANS KAYDET — JWT middleware ile korunuyor
+app.post('/api/admin/finans_kaydet', adminKorumasi, async (req, res) => {
+    try {
+        const { kocKodu, finans } = req.body;
+        await Ogretmen.updateOne({ kocKodu: kocKodu }, { finans: finans });
+        res.json({ basari: true });
+    } catch (e) {
+        console.error("🔴 Finans Kayıt Hatası:", e);
+        res.status(500).json({ basari: false });
+    }
+});
+
+// 🛡️ ADMIN KOÇ SİL — JWT middleware ile korunuyor
+app.post('/api/admin/sil', adminKorumasi, async (req, res) => { 
+    try {
+        const { kod } = req.body; 
         await Ogretmen.deleteOne({ kocKodu: kod }); 
         await Ogrenci.deleteMany({ kocKodu: kod }); 
         await Chat.deleteMany({ kocKodu: kod }); 
         await Kaynak.deleteMany({ kocKodu: kod }); 
         res.json({ basari: true }); 
-    } else { 
-        res.json({ basari: false }); 
-    } 
+    } catch (e) {
+        console.error("🔴 Koç Silme Hatası:", e);
+        res.status(500).json({ basari: false });
+    }
 });
 
-app.post('/api/admin/sil_ogrenci', async (req, res) => { 
-    const { sifre, ogrenciId } = req.body; 
-    if (sifre === process.env.ADMIN_PASS) { 
+// 🛡️ ADMIN ÖĞRENCİ SİL — JWT middleware ile korunuyor
+app.post('/api/admin/sil_ogrenci', adminKorumasi, async (req, res) => { 
+    try {
+        const { ogrenciId } = req.body; 
         await Ogrenci.findByIdAndDelete(ogrenciId); 
         res.json({ basari: true }); 
-    } else { 
-        res.json({ basari: false }); 
-    } 
+    } catch (e) {
+        console.error("🔴 Öğrenci Silme Hatası:", e);
+        res.status(500).json({ basari: false });
+    }
 });
 
-app.post('/api/admin/sifre_sifirla_ogrenci', async (req, res) => { 
-    const { sifre, ogrenciId } = req.body; 
-    if (sifre === process.env.ADMIN_PASS) { 
-        const tuz = await bcrypt.genSalt(10);
-        const hashliSifre = await bcrypt.hash("123456", tuz);
-        await Ogrenci.findByIdAndUpdate(ogrenciId, { sifre: hashliSifre }); 
-        res.json({ basari: true }); 
-    } else { 
-        res.json({ basari: false }); 
-    } 
+// 🛡️ ADMIN ÖĞRENCİ ŞİFRE SIFIRLAMA — Token tabanlı (varsayılan "123456" KALDIRILDI)
+app.post('/api/admin/sifre_sifirla_ogrenci', adminKorumasi, async (req, res) => { 
+    try {
+        const { ogrenciId } = req.body; 
+        
+        // GÜVENLİK: Güvenli token üret (açık metin DB'ye yazılmaz, hash kaydedilir)
+        const { token, tokenHash, expires } = sifreSifirlamaTokeniUret();
+        
+        const ogrenci = await Ogrenci.findByIdAndUpdate(ogrenciId, { 
+            sifreSifirlamaToken: tokenHash,
+            sifreSifirlamaExpires: expires
+        }, { new: true }); 
+        
+        // E-posta gönderim mantığı entegrasyonu
+        // Şemada 'email' alanı olmadığından simüle ediliyor. İleride ogrenci.eposta şeklinde değiştirilebilir.
+        await sifirlamaMailiGonder('ogrenci_maili@ornek.com', ogrenci.ogrenciAd, token);
+        
+        // Token admin ekranında gösterilir, admin kullanıcıya iletir
+        res.json({ basari: true, token: token, mesaj: 'Sıfırlama token\'ı e-posta olarak gönderildi (Log).' }); 
+    } catch (e) {
+        console.error("🔴 Öğrenci Şifre Sıfırlama Hatası:", e);
+        res.status(500).json({ basari: false });
+    }
 });
 
-app.post('/api/admin/sifre_sifirla_koc', async (req, res) => { 
-    const { sifre, kocKodu } = req.body; 
-    if (sifre === process.env.ADMIN_PASS) { 
-        const tuz = await bcrypt.genSalt(10);
-        const hashliSifre = await bcrypt.hash("123456", tuz);
-        await Ogretmen.findOneAndUpdate({ kocKodu: kocKodu }, { sifre: hashliSifre }); 
-        res.json({ basari: true }); 
-    } else { 
-        res.json({ basari: false }); 
-    } 
+// 🛡️ ADMIN KOÇ ŞİFRE SIFIRLAMA — Token tabanlı (varsayılan "123456" KALDIRILDI)
+app.post('/api/admin/sifre_sifirla_koc', adminKorumasi, async (req, res) => { 
+    try {
+        const { kocKodu } = req.body; 
+        
+        const { token, tokenHash, expires } = sifreSifirlamaTokeniUret();
+        
+        const koc = await Ogretmen.findOneAndUpdate({ kocKodu: kocKodu }, { 
+            sifreSifirlamaToken: tokenHash,
+            sifreSifirlamaExpires: expires
+        }, { new: true }); 
+        
+        // E-posta gönderim mantığı entegrasyonu
+        await sifirlamaMailiGonder('koc_maili@ornek.com', koc.kocAd, token);
+        
+        res.json({ basari: true, token: token, mesaj: 'Sıfırlama token\'ı e-posta olarak gönderildi (Log).' }); 
+    } catch (e) {
+        console.error("🔴 Koç Şifre Sıfırlama Hatası:", e);
+        res.status(500).json({ basari: false });
+    }
 });
 
-app.post('/api/koc/kayit', async (req, res) => { 
+// 🛡️ TOKEN İLE ŞİFRE GÜNCELLEME — Öğrenci veya koç
+app.post('/api/sifre-sifirla', girisLimiter, async (req, res) => {
+    try {
+        const { token, yeniSifre, tip } = req.body;
+
+        // GÜVENLİK: Tip kontrolü
+        if (!token || typeof token !== 'string' || !yeniSifre || typeof yeniSifre !== 'string') {
+            return res.status(400).json({ basari: false, mesaj: 'Geçersiz istek.' });
+        }
+
+        if (yeniSifre.length < 6) {
+            return res.status(400).json({ basari: false, mesaj: 'Şifre en az 6 karakter olmalıdır.' });
+        }
+
+        // Token'ı hash'le ve DB'de ara
+        const crypto = require('crypto');
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+        const Model = tip === 'koc' ? Ogretmen : Ogrenci;
+        const kullanici = await Model.findOne({
+            sifreSifirlamaToken: tokenHash,
+            sifreSifirlamaExpires: { $gt: new Date() } // Süresi dolmamış mı?
+        });
+
+        if (!kullanici) {
+            return res.status(400).json({ basari: false, mesaj: 'Geçersiz veya süresi dolmuş token.' });
+        }
+
+        // Yeni şifreyi hash'le ve kaydet
+        const tuz = await bcrypt.genSalt(12);
+        const hashliSifre = await bcrypt.hash(yeniSifre, tuz);
+
+        kullanici.sifre = hashliSifre;
+        kullanici.sifreSifirlamaToken = null;   // Token'ı tek kullanımlık yap
+        kullanici.sifreSifirlamaExpires = null;
+        await kullanici.save();
+
+        res.json({ basari: true, mesaj: 'Şifreniz başarıyla güncellendi.' });
+    } catch (e) {
+        console.error("🔴 Şifre Güncelleme Hatası:", e);
+        res.status(500).json({ basari: false, mesaj: 'Sunucu hatası.' });
+    }
+});
+
+// 🛡️ KOÇ KAYIT — Brute-force korumalı
+app.post('/api/koc/kayit', girisLimiter, async (req, res) => { 
     try { 
         const { kocAd, sifre } = req.body; 
         let varMi = await Ogretmen.findOne({ kocAd }); 
@@ -217,7 +326,7 @@ app.post('/api/koc/kayit', async (req, res) => {
             return res.json({ basari: false, mesaj: "Bu eğitmen ismi zaten alınmış!" }); 
         }
         
-        const tuz = await bcrypt.genSalt(10);
+        const tuz = await bcrypt.genSalt(12);
         const hashliSifre = await bcrypt.hash(sifre, tuz);
         
         let yeniKod = Math.random().toString(36).substr(2, 6).toUpperCase(); 
@@ -228,7 +337,14 @@ app.post('/api/koc/kayit', async (req, res) => {
     } catch (e) { console.error("🔴 Sistem Hatası (API):", e); res.json({ basari: false }); } 
 });
 
-app.post('/api/koc/giris', async (req, res) => { 
+// 🛡️ KOÇ GİRİŞ — Brute-force korumalı + Girdi Doğrulama
+app.post('/api/koc/giris', 
+    girisLimiter, 
+    girdiDogrula({
+        kocAd: { zorunlu: true, tip: 'string', minUzunluk: 3 },
+        sifre: { zorunlu: true, tip: 'string', minUzunluk: 6 }
+    }),
+    async (req, res) => { 
     try { 
         const { kocAd, sifre } = req.body; 
         let koc = await Ogretmen.findOne({ kocAd }); 
@@ -243,7 +359,8 @@ app.post('/api/koc/giris', async (req, res) => {
     } catch (e) { console.error("🔴 Sistem Hatası (API):", e); res.json({ basari: false }); } 
 });
 
-app.post('/api/kayit', async (req, res) => { 
+// 🛡️ ÖĞRENCİ KAYIT
+app.post('/api/kayit', girisLimiter, async (req, res) => { 
     try { 
         const { ogrenciAd, sifre, kocKodu } = req.body; 
         let kocVarMi = await Ogretmen.findOne({ kocKodu }); 
@@ -258,7 +375,7 @@ app.post('/api/kayit', async (req, res) => {
             return res.json({ basari: false, mesaj: "Bu öğrenci adı zaten kullanılıyor!" }); 
         }
         
-        const tuz = await bcrypt.genSalt(10);
+        const tuz = await bcrypt.genSalt(12);
         const hashliSifre = await bcrypt.hash(sifre, tuz);
         
         let vKodu = 'V-' + Math.floor(1000 + Math.random() * 9000); 
@@ -282,7 +399,14 @@ app.post('/api/kayit', async (req, res) => {
     } catch (e) { console.error("🔴 Sistem Hatası (API):", e); res.json({ basari: false }); } 
 });
 
-app.post('/api/giris', async (req, res) => { 
+// 🛡️ ÖĞRENCİ GİRİŞ — Brute-force korumalı + Girdi Doğrulama
+app.post('/api/giris', 
+    girisLimiter, 
+    girdiDogrula({
+        ogrenciAd: { zorunlu: true, tip: 'string', minUzunluk: 2 },
+        sifre: { zorunlu: true, tip: 'string', minUzunluk: 6 }
+    }),
+    async (req, res) => { 
     try { 
         const { ogrenciAd, sifre } = req.body; 
         let ogrenci = await Ogrenci.findOne({ ogrenciAd }); 
@@ -297,17 +421,24 @@ app.post('/api/giris', async (req, res) => {
     } catch (e) { console.error("🔴 Sistem Hatası (API):", e); res.json({ basari: false }); } 
 });
 
-app.post('/api/veli/giris', async (req, res) => { 
-    try { 
-        let ogrenci = await Ogrenci.findOne({ veliKodu: req.body.veliKodu }); 
-        
-        if (ogrenci) {
-            res.json({ basari: true, ogrenciAd: ogrenci.ogrenciAd, kocKodu: ogrenci.kocKodu }); 
-        } else {
-            res.json({ basari: false, mesaj: "Veli Takip Kodu bulunamadı!" }); 
-        }
-    } catch (e) { console.error("🔴 Sistem Hatası (API):", e); res.json({ basari: false }); } 
-});
+// 🛡️ VELİ GİRİŞ — Brute-force korumalı + Girdi Doğrulama (NoSQL Injection önlemi)
+app.post('/api/veli/giris', 
+    girisLimiter,
+    girdiDogrula({ 
+        veliKodu: { zorunlu: true, tip: 'string', regex: /^V-\d{4}$/, maxUzunluk: 6 } 
+    }),
+    async (req, res) => { 
+        try { 
+            let ogrenci = await Ogrenci.findOne({ veliKodu: req.body.veliKodu }); 
+            
+            if (ogrenci) {
+                res.json({ basari: true, ogrenciAd: ogrenci.ogrenciAd, kocKodu: ogrenci.kocKodu }); 
+            } else {
+                res.json({ basari: false, mesaj: "Veli Takip Kodu bulunamadı!" }); 
+            }
+        } catch (e) { console.error("🔴 Sistem Hatası (API):", e); res.json({ basari: false }); } 
+    }
+);
 
 app.post('/api/sifreler', async (req, res) => { 
     try { 
@@ -910,6 +1041,22 @@ io.on('connection', (socket) => {
         } catch (e) { console.error("🔴 Sistem Hatası (Socket):", e); } 
     });
 
+    socket.on('finans_guncelle', async (veri) => {
+        try {
+            let ogrenci = await Ogrenci.findOne({ ogrenciAd: veri.ogrenciAd, kocKodu: veri.kocKodu });
+            if (ogrenci) {
+                let currentFinans = ogrenci.finans || {};
+                currentFinans.bakiye = veri.bakiye;
+                ogrenci.finans = currentFinans;
+                ogrenci.markModified('finans');
+                await ogrenci.save();
+                
+                let list = await Ogrenci.find({ kocKodu: veri.kocKodu });
+                io.to(veri.kocKodu).emit('gorev_guncellendi', list);
+            }
+        } catch (e) { console.error("Finans Güncelleme Hatası:", e); }
+    });
+
     socket.on('chat_mesaji_gonder', async (data) => { 
         try { 
             const n = new Chat({ 
@@ -995,6 +1142,85 @@ io.on('connection', (socket) => {
                 oneri: "API bağlantısını kontrol et." 
             });
         } 
+    });
+
+    socket.on('veli_yapay_zeka_raporu_iste', async (veri) => {
+        try {
+            let ogrenci = await Ogrenci.findOne({ ogrenciAd: veri.ogrenciAd });
+            if (!ogrenci) return;
+
+            let xp = ogrenci.xp || 0;
+            let isiHaritasi = JSON.stringify(ogrenci.isiHaritasi || {});
+            let tamamlananGorevler = ogrenci.gorevler ? ogrenci.gorevler.filter(g=>g.tamamlandi).length : 0;
+            let bekleyenGorevler = ogrenci.gorevler ? ogrenci.gorevler.filter(g=>!g.tamamlandi).length : 0;
+
+            let prompt = `
+            Sen profesyonel bir eğitim koçusun. Adın KatalizApp Yapay Zeka Danışmanı.
+            Şu anda analiz ettiğin öğrencinin adı: ${veri.ogrenciAd}
+            Öğrencinin Mevcut Deneyim Puanı (XP): ${xp}
+            Tamamladığı Görev Sayısı: ${tamamlananGorevler}
+            Bekleyen Görev Sayısı: ${bekleyenGorevler}
+            Konu Isı Haritası (Zayıf, Orta, İyi): ${isiHaritasi}
+
+            Lütfen bu verilere bakarak, öğrencinin velisine hitaben HTML formatında (<b>, <br> kullanarak) profesyonel, şefkatli ve yönlendirici bir "Haftalık Durum Özeti" yaz. 
+            Eğer zayıf konuları varsa veya görevleri aksatıyorsa veliye nazikçe uyarıda bulun. 
+
+            ÖNEMLİ: Bana sadece şu formatta JSON dön (başka açıklama veya markdown ekleme):
+            {"rapor": "html formatındaki rapor metni"}
+            `;
+
+            const model = genAI.getGenerativeModel({ 
+                model: "gemini-1.5-flash",
+                generationConfig: { responseMimeType: "application/json" }
+            });
+            
+            const result = await model.generateContent(prompt);
+            let textRes = (await result.response).text().replace(/```json/gi, '').replace(/```/g, '').trim();
+            let aiData = JSON.parse(textRes);
+
+            socket.emit('veli_yapay_zeka_raporu_geldi', aiData.rapor);
+        } catch(err) {
+            console.error("Veli AI Rapor Hatası:", err);
+            socket.emit('veli_yapay_zeka_raporu_geldi', "<span style='color:red;'>🚨 Yapay Zeka şu an analiz yapamıyor. Lütfen daha sonra tekrar deneyin.</span>");
+        }
+    });
+
+    socket.on('net_analizi_iste', async (veri) => {
+        try {
+            let ogrenci = await Ogrenci.findOne({ ogrenciAd: veri.ogrenciAd });
+            if (!ogrenci || !ogrenci.netler || ogrenci.netler.length < 2) {
+                return socket.emit('net_analizi_geldi', "Yeterli net verisi yok. Analiz için en az 2 deneme girmelisin.");
+            }
+            
+            let sonNetler = ogrenci.netler.slice(-5);
+            let netGecmisi = JSON.stringify(sonNetler.map(n => ({tarih: n.tarih, turkce: n.turkce, mat: n.mat, fen: n.fen, sos: n.sos})));
+
+            let prompt = `
+            Sen profesyonel bir eğitim koçusun. Adın "Kaptan".
+            Öğrencinin adı: ${veri.ogrenciAd}
+            Öğrencinin son deneme sınavı net geçmişi (JSON formatında): ${netGecmisi}
+
+            Bu verilere bakarak, öğrencinin deneme performansını HTML formatında (<b>, <br> kullanarak) analiz et. 
+            Hangi derslerde yükseliş var, hangilerinde düşüş var? Kısa, motive edici ve nokta atışı bir analiz yaz.
+            
+            ÖNEMLİ: Bana sadece şu formatta JSON dön (başka açıklama veya markdown ekleme):
+            {"analiz": "html formatındaki analiz metni"}
+            `;
+
+            const model = genAI.getGenerativeModel({ 
+                model: "gemini-1.5-flash",
+                generationConfig: { responseMimeType: "application/json" }
+            });
+            
+            const result = await model.generateContent(prompt);
+            let textRes = (await result.response).text().replace(/```json/gi, '').replace(/```/g, '').trim();
+            let aiData = JSON.parse(textRes);
+
+            socket.emit('net_analizi_geldi', aiData.analiz);
+        } catch(err) {
+            console.error("Net Analizi Hatası:", err);
+            socket.emit('net_analizi_geldi', "<span style='color:red;'>🚨 Net analizi yapılamadı.</span>");
+        }
     });
 
     socket.on('ogrenci_chatbot_mesaji', async (veri) => { 

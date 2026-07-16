@@ -363,53 +363,94 @@
     </div>
 
     <script>
-        let aktifSifre = ''; 
         let tumKoclar = []; 
         let tumOgrler = [];
         
         const AYLAR = ["Eyl", "Eki", "Kas", "Ara", "Oca", "Sub", "Mar", "Nis", "May", "Haz"];
 
-        window.onload = function() {
-            let kayitliSifre = localStorage.getItem('adminPass');
-            if(kayitliSifre === 'sincap-boss-2026') {
-                document.getElementById('adminPass').value = kayitliSifre;
-                giris();
-            }
+        // 🛡️ Sayfa yüklendiğinde mevcut cookie ile oturum kontrolü yap
+        window.onload = async function() {
+            try {
+                const res = await fetch('/api/admin', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include'
+                });
+                const result = await res.json();
+                if(result.basari) {
+                    document.getElementById('loginScreen').style.display = 'none';
+                    tumKoclar = result.data.koclar;
+                    tumOgrler = result.data.ogrler;
+                    verileriRenderEt();
+                }
+            } catch(e) { /* Oturum yok, login ekranı göster */ }
         };
 
-        // Sistemi Başlat (Login)
+        // 🛡️ Sistemi Başlat (JWT + httpOnly Cookie Login)
         async function giris() { 
             let s = document.getElementById('adminPass').value; 
             if(!s) return; 
             
             try {
-                const res = await fetch('/api/admin', { 
+                // Adım 1: JWT token al (httpOnly cookie olarak set edilir)
+                const loginRes = await fetch('/api/admin/giris', { 
                     method: 'POST', 
                     headers: {'Content-Type': 'application/json'}, 
+                    credentials: 'include',
                     body: JSON.stringify({ sifre: s }) 
                 }); 
                 
-                const result = await res.json(); 
+                const loginResult = await loginRes.json(); 
                 
-                if(result.basari) { 
-                    aktifSifre = s; 
-                    localStorage.setItem('adminPass', s); 
-                    
+                if(!loginResult.basari) {
+                    return alert(loginResult.mesaj || 'Hatalı Şifre!');
+                }
+
+                // Adım 2: Cookie ile verileri çek
+                const dataRes = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include'
+                });
+                const dataResult = await dataRes.json();
+
+                if(dataResult.basari) {
                     document.getElementById('loginScreen').style.display = 'none'; 
-                    tumKoclar = result.data.koclar; 
-                    tumOgrler = result.data.ogrler; 
-                    
+                    tumKoclar = dataResult.data.koclar; 
+                    tumOgrler = dataResult.data.ogrler; 
                     verileriRenderEt(); 
-                } else { 
-                    alert('Hatalı Şifre!'); 
-                } 
+                }
             } catch (err) {
                 console.error("Giriş hatası:", err);
+                alert("Sunucuya bağlanılamadı!");
             }
         }
 
-        function adminCikis() {
-            localStorage.removeItem('adminPass');
+        // 🛡️ Verileri tazele (cookie ile)
+        async function verileriTazele() {
+            try {
+                const dataRes = await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    credentials: 'include'
+                });
+                const dataResult = await dataRes.json();
+                if(dataResult.basari) {
+                    tumKoclar = dataResult.data.koclar;
+                    tumOgrler = dataResult.data.ogrler;
+                    verileriRenderEt();
+                }
+            } catch(e) { console.error("Veri tazaleme hatası:", e); }
+        }
+
+        // 🛡️ Güvenli Çıkış (httpOnly cookie sunucu tarafında temizlenir)
+        async function adminCikis() {
+            try {
+                await fetch('/api/admin/cikis', { 
+                    method: 'POST', 
+                    credentials: 'include' 
+                });
+            } catch(e) {}
             location.reload();
         }
 
@@ -427,7 +468,7 @@
             el.classList.toggle('odendi');
         };
 
-        // Finans verisini veritabanına yollama
+        // 🛡️ Finans verisini veritabanına yollama (cookie tabanlı, body'de şifre YOK)
         window.muhasebeKaydet = async function(kod) {
             let finansData = {};
             
@@ -442,8 +483,8 @@
                 const res = await fetch('/api/admin/finans_kaydet', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
+                    credentials: 'include',
                     body: JSON.stringify({
-                        sifre: aktifSifre, 
                         kocKodu: kod, 
                         finans: finansData
                     })
@@ -453,7 +494,7 @@
                 
                 if (data.basari) {
                     alert("Eğitmen lisans ödeme bilgisi başarıyla kaydedildi!");
-                    giris(); // Tabloları tazele
+                    verileriTazele();
                 } else {
                     alert("Kaydetme başarısız!");
                 }
@@ -520,7 +561,7 @@
                         <td>${bagliOgrenciSayisi}</td>
                         <td>
                             <div style="display:flex; gap:5px;">
-                                <button class="btn-yellow" onclick="sifreSifirlaKoc('${k.kocKodu}', '${k.kocAd}')" title="Şifreyi '123456' Yapar">🔑 Sıfırla</button>
+                                <button class="btn-yellow" onclick="sifreSifirlaKoc('${k.kocKodu}', '${k.kocAd}')" title="Sıfırlama Token'ı Üretir">🔑 Sıfırla</button>
                                 <button class="btn-red" onclick="kocSil('${k.kocKodu}', '${k.kocAd}')">🗑️ Sil (Banla)</button>
                             </div>
                         </td>
@@ -544,7 +585,7 @@
                         <td style="color:#f59e0b;">${o.xp || 0} XP</td>
                         <td>
                             <div style="display:flex; gap:5px;">
-                                <button class="btn-yellow" onclick="sifreSifirlaOgrenci('${o._id}', '${o.ogrenciAd}')" title="Şifreyi '123456' Yapar">🔑 Sıfırla</button>
+                                <button class="btn-yellow" onclick="sifreSifirlaOgrenci('${o._id}', '${o.ogrenciAd}')" title="Sıfırlama Token'ı Üretir">🔑 Sıfırla</button>
                                 <button class="btn-red" onclick="ogrenciSil('${o._id}', '${o.ogrenciAd}')">🗑️ Kov</button>
                             </div>
                         </td>
@@ -553,22 +594,23 @@
         }
 
         // =====================================
-        // VERİTABANI: ŞİFRE SIFIRLAMA İŞLEMLERİ
+        // 🛡️ ŞİFRE SIFIRLAMA İŞLEMLERİ (Token Tabanlı)
         // =====================================
 
         async function sifreSifirlaKoc(kod, isim) {
-            if (confirm(`DİKKAT: ${isim} isimli eğitmenin şifresini '123456' olarak değiştirmek istediğinize emin misiniz?`)) {
+            if (confirm(`DİKKAT: ${isim} isimli eğitmen için sıfırlama token'ı üretmek istediğinize emin misiniz?`)) {
                 try {
                     const res = await fetch('/api/admin/sifre_sifirla_koc', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ sifre: aktifSifre, kocKodu: kod })
+                        credentials: 'include',
+                        body: JSON.stringify({ kocKodu: kod })
                     });
                     const data = await res.json();
                     if (data.basari) {
-                        alert("✅ İşlem başarılı! Eğitmenin yeni şifresi: 123456");
+                        prompt(`✅ ${isim} için sıfırlama token'ı üretildi (1 saat geçerli).\nBu token'ı eğitmene iletin:`, data.token);
                     } else {
-                        alert("Sıfırlama başarısız! Sistem şifrenizi kontrol edin.");
+                        alert("Sıfırlama başarısız! Oturum süreniz dolmuş olabilir.");
                     }
                 } catch (err) {
                     console.error("Sıfırlama hatası:", err);
@@ -577,18 +619,19 @@
         }
 
         async function sifreSifirlaOgrenci(id, isim) {
-            if (confirm(`DİKKAT: ${isim} isimli öğrencinin şifresini '123456' olarak değiştirmek istediğinize emin misiniz?`)) {
+            if (confirm(`DİKKAT: ${isim} isimli öğrenci için sıfırlama token'ı üretmek istediğinize emin misiniz?`)) {
                 try {
                     const res = await fetch('/api/admin/sifre_sifirla_ogrenci', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ sifre: aktifSifre, ogrenciId: id })
+                        credentials: 'include',
+                        body: JSON.stringify({ ogrenciId: id })
                     });
                     const data = await res.json();
                     if (data.basari) {
-                        alert("✅ İşlem başarılı! Öğrencinin yeni şifresi: 123456");
+                        prompt(`✅ ${isim} için sıfırlama token'ı üretildi (1 saat geçerli).\nBu token'ı öğrenciye iletin:`, data.token);
                     } else {
-                        alert("Sıfırlama başarısız! Sistem şifrenizi kontrol edin.");
+                        alert("Sıfırlama başarısız! Oturum süreniz dolmuş olabilir.");
                     }
                 } catch (err) {
                     console.error("Sıfırlama hatası:", err);
@@ -597,7 +640,7 @@
         }
 
         // =====================================
-        // VERİTABANI: SİLME (BANLAMA) İŞLEMLERİ
+        // 🛡️ SİLME (BANLAMA) İŞLEMLERİ (Cookie tabanlı)
         // =====================================
 
         async function kocSil(kod, isim) { 
@@ -606,14 +649,15 @@
                     const res = await fetch('/api/admin/sil', { 
                         method: 'POST', 
                         headers: {'Content-Type': 'application/json'}, 
-                        body: JSON.stringify({ sifre: aktifSifre, kod: kod }) 
+                        credentials: 'include',
+                        body: JSON.stringify({ kod: kod }) 
                     }); 
                     
                     const data = await res.json(); 
                     
                     if (data.basari) { 
                         alert("Eğitmen ve sınıfı silindi!"); 
-                        giris(); 
+                        verileriTazele(); 
                     } 
                 } catch (err) {
                     console.error("Silme hatası:", err);
@@ -627,14 +671,15 @@
                     const res = await fetch('/api/admin/sil_ogrenci', { 
                         method: 'POST', 
                         headers: {'Content-Type': 'application/json'}, 
-                        body: JSON.stringify({ sifre: aktifSifre, ogrenciId: id }) 
+                        credentials: 'include',
+                        body: JSON.stringify({ ogrenciId: id }) 
                     }); 
                     
                     const data = await res.json(); 
                     
                     if (data.basari) { 
                         alert("Öğrenci silindi!"); 
-                        giris(); 
+                        verileriTazele(); 
                     } 
                 } catch (err) {
                     console.error("Silme hatası:", err);
