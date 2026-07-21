@@ -45,6 +45,12 @@ app.use(helmet({
     }
 }));
 
+// 🛡️ Permissions-Policy Header (Kamera, mikrofon, lokasyon gibi tarayıcı özelliklerini kısıtlar)
+app.use((req, res, next) => {
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), payment=()');
+    next();
+});
+
 // DDoS ve Brute-Force koruması: 15 dakikada 100 API isteği limiti
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,

@@ -11,7 +11,7 @@ Bu dosya, yapay zeka asistanları arasında bağlamın kaybolmaması ve projenin
 Projeye yapılan pentest sonucunda bulunan tüm zafiyetler başarılı bir şekilde kapatılmış ve kod altyapısı güvenli hale getirilmiştir. Bu doğrultuda yapılan temel işlemler aşağıdadır:
 
 1.  **NoSQL Injection Koruması:**
-    *   Tüm API isteklerine `express-mongo-sanitize` paketi entegre edildi (`server.js`).
+    *   Tüm API isteklerine `express-mongo-sanitize` mantığı entegre edildi. Ancak orijinal paket, Express 5.x ile uyumsuz (req.query nesnesinin üzerine yazmaya çalıştığı için Type Error veriyordu) olduğundan kaldırılarak yerine **yerel ve güvenli** `middleware/mongoSanitizeSafe.js` eklendi (`server.js` içerisinde aktif).
     *   Öğrenci, Koç ve Veli girişleri için `req.body` üzerinden gelen verilerin tiplerini (string/number) ve formatlarını doğrulayan `girdiDogrula` şema tabanlı middleware (`middleware/sanitize.js`) yazıldı.
 2.  **Güvenli Kimlik Doğrulama & JWT (Admin Paneli):**
     *   Admin parolası (`1453Alp1.`) açık metin olarak değil, Bcrypt ile hash'lenerek ve `.env` üzerinden güvenli şekilde okunacak hale getirildi.
@@ -27,7 +27,7 @@ Projeye yapılan pentest sonucunda bulunan tüm zafiyetler başarılı bir şeki
 
 ## 🚀 Mevcut Durum
 *   Tüm kodlar Node.js syntax kontrolünden geçirilmiş, hatasız çalışmaktadır.
-*   En son yapılan güvenlik güncellemeleri başarıyla git repository'sine (GitHub) commit edilmiş ve `origin/master` dalına pushlanmıştır (Commit Mesajı: `feat: Güvenlik sertifikasyonu (Bug Hunter Pentest Düzeltmeleri) tamamlandı`).
+*   En son yapılan güvenlik güncellemeleri ve Render/Express 5.x production hata çözümleri başarıyla git repository'sine (GitHub) commit edilmiş ve `origin/master` dalına pushlanmıştır (Commit Mesajı: `fix: resolve TypeError for req.query in Express 5 by replacing express-mongo-sanitize with local safe alternative`).
 *   Altyapı, yeni özellikler eklenmeye ve geliştirmelere tamamen hazırdır.
 
 ## ⚠️ Sonraki Ajan İçin Notlar
